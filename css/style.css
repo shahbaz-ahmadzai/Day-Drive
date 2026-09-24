@@ -264,6 +264,8 @@ section[id], footer[id] { scroll-margin-top: calc(var(--header-h) - 1px); }
 }
 
 /* Services */
+.swipe-hint { display: none; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; font-size: 14px; color: var(--muted); }
+.swipe-hint .icon { width: 16px; height: 16px; color: var(--gold-strong); }
 .service-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; }
 .service-card {
   display: flex; flex-direction: column;
@@ -418,7 +420,8 @@ section[id], footer[id] { scroll-margin-top: calc(var(--header-h) - 1px); }
 .page-hero h1 { font-family: var(--serif); font-weight: 700; font-size: clamp(42px, 6vw, 76px); line-height: 1.05; margin: 10px 0 18px; }
 .page-hero p { max-width: 620px; font-size: 19px; color: #e7e7e7; }
 .page-hero .btn { margin-top: 32px; }
-.page-contact { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 28px; }
+.page-contact { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
+.page-contact .btn { margin-top: 0; }
 
 /* ==========================================================
    Responsive
@@ -481,17 +484,9 @@ section[id], footer[id] { scroll-margin-top: calc(var(--header-h) - 1px); }
 @media (max-width: 700px) {
   body { font-size: 16px; }
   .container { width: calc(100% - 32px); }
-  .service-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
   .service-body h3 { font-size: 22px; }
   .service-body p { font-size: 15px; }
-  .why-grid { grid-template-columns: 1fr; }
-  .why-grid li { border-left: 0 !important; padding: 8px 0; }
-  .why-grid li + li { border-top: 1px solid var(--line); padding-top: 16px; }
-  .hero-services { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 8px; }
-  .hero-services a { width: auto; font-size: 15px; }
   .hero-lead br, .cta br { display: none; }
-  .hero-services .icon { width: 40px; height: 40px; }
-  .hero-buttons .btn, .cta-action .btn { min-width: 0; width: 100%; }
   .lang-toggle { font-size: 16px; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .footer-grid > * { border-left: 0 !important; padding-inline: 0; }
@@ -501,8 +496,129 @@ section[id], footer[id] { scroll-margin-top: calc(var(--header-h) - 1px); }
 }
 
 @media (max-width: 460px) {
-  .service-grid { grid-template-columns: 1fr; }
   .feature-list li { font-size: 17px; }
-  .fleet-image { padding: 0 40px; }
-  .footer-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; column-gap: 16px; }
+  .footer-grid > :nth-child(2) { grid-column: 1 / -1; }
+}
+
+/* ==========================================================
+   Phones (≤ 700px) – touch-friendly layout
+   ========================================================== */
+.mobile-bar { display: none; }
+
+@media (max-width: 700px) {
+  :root { --header-h: 68px; }
+  .brand img { height: 54px; }
+  .header-actions { gap: 8px; }
+  .lang-toggle { padding: 10px 8px; }
+  .menu-toggle { width: 46px; height: 46px; }
+  .nav-open { overflow: hidden; }            /* page doesn't scroll behind the open menu */
+  .main-nav { bottom: 0; justify-content: flex-start; overflow-y: auto; }
+
+  /* Hero: text first, car visible underneath */
+  .hero-bg { background-position: 68% bottom; }
+  .hero-bg::after { background: linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.72) 45%, rgba(0,0,0,.55) 80%, rgba(0,0,0,.35) 100%); }
+  .hero-inner { flex-direction: column; gap: 0; padding-block: 34px 44px; }
+  .hero-quote { display: none; }
+  .hero .eyebrow { font-size: 14px; margin-bottom: 10px; }
+  .hero h1 { font-size: clamp(34px, 10.4vw, 46px); }
+  .line-gold { margin-top: 4px; }
+  .hero-lead { font-size: 19px; margin-top: 16px; }
+  .hero-services { display: flex; justify-content: space-between; gap: 4px; margin-top: 28px; }
+  .hero-services li { flex: 1; min-width: 0; }
+  .hero-services a { width: auto; gap: 8px; font-size: 13px; }
+  .hero-services .icon { width: 34px; height: 34px; }
+  .hero-buttons { flex-direction: column; gap: 12px; margin-top: 30px; }
+  .hero-buttons .btn { width: 100%; min-width: 0; }
+
+  /* Services: swipe sideways through the cards */
+  .section { padding-block: 30px 44px; }
+  .section-head h2 { font-size: clamp(28px, 8vw, 36px); }
+  .service-grid {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 16px;
+    margin-inline: -16px;
+    padding: 4px 16px 18px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .service-grid::-webkit-scrollbar { display: none; }
+  .service-card { flex: 0 0 80%; scroll-snap-align: start; }
+  .service-card:hover { transform: none; }
+  .swipe-hint { display: flex; }
+
+  /* Why us: compact 2 × 2 */
+  .why { padding-block: 26px; }
+  .why-title { font-size: 16px; }
+  .why-grid { grid-template-columns: 1fr 1fr; gap: 22px 14px; }
+  .why-grid li, .why-grid li + li { flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 0; border: 0 !important; }
+  .why-grid .icon { width: 42px; height: 42px; }
+  .why-grid h3 { font-size: 20px; white-space: normal; }
+  .why-grid p { font-size: 14.5px; }
+  .why-grid p br { display: none; }
+
+  /* Fleet */
+  .fleet-image { padding: 0 44px; margin-top: 6px; }
+  .slider-arrow { width: 42px; height: 42px; top: calc((100vw - 32px - 88px) / 4.94 + 6px); }
+  .slider-arrow .icon { width: 20px; height: 20px; }
+  .fleet-info h3 { font-size: 26px; text-align: center; }
+  .feature-list li { font-size: 16.5px; padding-block: 3px; }
+  .fleet-cta { width: 100%; }
+
+  /* Booking banner */
+  .cta { padding-block: 30px; }
+  .cta .eyebrow { font-size: 14px; }
+  .cta h2 { font-size: 30px; }
+  .cta-action { width: 100%; }
+  .cta-action .btn { width: 100%; min-width: 0; }
+
+  /* Footer */
+  .footer-brand { text-align: center; }
+  .footer-brand .brand img { margin: 0 auto 10px; }
+  .footer-brand .social { justify-content: center; }
+  .contact-list li { padding-block: 4px; }
+  .contact-list a, .link-list a { display: inline-block; padding-block: 4px; }
+  .footer-slogan { font-size: 38px; padding-top: 6px; }
+  .footer-bottom-inner { padding-bottom: 24px; }
+
+  /* Sticky call / book bar at the bottom of the screen */
+  body { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+  .mobile-bar {
+    position: fixed; inset: auto 0 0 0; z-index: 40;
+    display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px;
+    padding: 9px 12px calc(9px + env(safe-area-inset-bottom));
+    background: rgba(14, 17, 22, .97);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -8px 24px rgba(0,0,0,.25);
+  }
+  .mobile-bar .btn { padding: 12px 10px; font-size: 15px; gap: 8px; }
+  .mobile-bar .icon { width: 18px; height: 18px; }
+  .nav-open .mobile-bar { display: none; }
+
+  /* Sub-pages */
+  .page-hero { min-height: calc(100dvh - var(--header-h) - 64px); padding-block: 50px; }
+  .page-hero .btn { width: 100%; }
+  .page-contact { flex-direction: column; }
+}
+
+@media (max-width: 360px) {
+  .hero-services a { font-size: 12px; }
+  .hero-services .icon { width: 30px; height: 30px; }
+  .why-grid { grid-template-columns: 1fr; }
+  .service-card { flex-basis: 86%; }
+}
+
+/* Phone turned sideways: keep the hero short */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hero { min-height: 0; }
+  .hero-quote { display: none; }
+}
+
+/* No hover effects on touch screens */
+@media (hover: none) {
+  .service-card:hover { transform: none; box-shadow: var(--shadow); }
+  .btn:hover .icon { transform: none; }
 }
