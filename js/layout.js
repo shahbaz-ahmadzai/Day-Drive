@@ -116,10 +116,18 @@
     '<ul><li><a href="#" data-i18n="footer.imprint"></a></li><li><a href="#" data-i18n="footer.privacy"></a></li><li><a href="#" data-i18n="footer.terms"></a></li></ul>' +
     "</div></div></footer>";
 
+  /* ---------- Phone-only bottom bar: call + book ---------- */
+  var mobileBar =
+    '<div class="mobile-bar">' +
+    '<a class="btn btn-outline" href="tel:+4917643241205">' + icon("phone") + '<span data-i18n="btn.call"></span></a>' +
+    '<a class="btn btn-gold" href="booking.html"><span data-i18n="btn.bookRide"></span>' + icon("arrow") + "</a>" +
+    "</div>";
+
   var h = document.getElementById("site-header");
   var f = document.getElementById("site-footer");
   if (h) h.outerHTML = header;
   if (f) f.outerHTML = footer;
+  if (page !== "booking") document.body.insertAdjacentHTML("beforeend", mobileBar);
 
   // Fill any <span data-icon="name"></span> placeholders used inside the pages
   document.querySelectorAll("[data-icon]").forEach(function (el) {

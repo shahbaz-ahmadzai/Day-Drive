@@ -90,12 +90,15 @@
       var open = document.body.classList.toggle("nav-open");
       menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
     });
+    function closeMenu() {
+      document.body.classList.remove("nav-open");
+      menuBtn.setAttribute("aria-expanded", "false");
+    }
     document.querySelectorAll(".main-nav a").forEach(function (a) {
-      a.addEventListener("click", function () {
-        document.body.classList.remove("nav-open");
-        menuBtn.setAttribute("aria-expanded", "false");
-      });
+      a.addEventListener("click", closeMenu);
     });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+    window.addEventListener("resize", function () { if (window.innerWidth > 980) closeMenu(); });
   }
 
   /* ---------- Active menu item ---------- */
@@ -155,6 +158,17 @@
     }
     slider.querySelector(".slider-prev").addEventListener("click", function () { go(index - 1); });
     slider.querySelector(".slider-next").addEventListener("click", function () { go(index + 1); });
+    // swipe left / right on phones
+    var startX = null, startY = null;
+    slider.addEventListener("touchstart", function (e) {
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    }, { passive: true });
+    slider.addEventListener("touchend", function (e) {
+      if (startX === null) return;
+      var dx = e.changedTouches[0].clientX - startX, dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) go(index + (dx < 0 ? 1 : -1));
+      startX = null;
+    }, { passive: true });
     go(0);
   }
 })();
