@@ -27,17 +27,20 @@
 
   function applyLang(lang) {
     document.documentElement.lang = lang;
+    // if a text is missing from translations.js, keep what is already on the page instead of blanking it
     document.querySelectorAll("[data-i18n]").forEach(function (el) {
-      el.textContent = t(lang, el.getAttribute("data-i18n"));
+      var v = t(lang, el.getAttribute("data-i18n"));
+      if (v) el.textContent = v;
     });
     document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
-      el.innerHTML = t(lang, el.getAttribute("data-i18n-html"));
+      var v = t(lang, el.getAttribute("data-i18n-html"));
+      if (v) el.innerHTML = v;
     });
     // data-i18n-attr="alt:key; aria-label:key2"
     document.querySelectorAll("[data-i18n-attr]").forEach(function (el) {
       el.getAttribute("data-i18n-attr").split(";").forEach(function (pair) {
         var p = pair.split(":");
-        if (p.length === 2) el.setAttribute(p[0].trim(), t(lang, p[1].trim()));
+        if (p.length === 2 && t(lang, p[1].trim())) el.setAttribute(p[0].trim(), t(lang, p[1].trim()));
       });
     });
     var titleKey = document.body.getAttribute("data-title-key") || "meta.title";
@@ -51,7 +54,18 @@
       b.setAttribute("aria-selected", b.getAttribute("data-lang") === lang ? "true" : "false");
     });
     try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
+    window.DD_LANG = lang;
+    // lets page scripts (e.g. the booking page) re-translate texts they create themselves
+    document.dispatchEvent(new CustomEvent("dd:langchange", { detail: { lang: lang } }));
   }
+
+  // shared helpers for other scripts: ddT("key") returns the text in the current language
+  window.ddT = function (key, vars) {
+    var s = t(window.DD_LANG || "en", key);
+    if (vars) Object.keys(vars).forEach(function (k) { s = s.split("{" + k + "}").join(vars[k]); });
+    return s;
+  };
+  window.ddApplyLang = function () { applyLang(window.DD_LANG || "en"); };
 
   applyLang(getSavedLang());
 
