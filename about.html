@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0e1116">
   <meta name="format-detection" content="telephone=no">
-  <title>Day Drive Service</title>
+  <title>About Us | Day Drive Service</title>
   <meta name="description" content="Premium chauffeur service in Frankfurt.">
   <link rel="icon" href="assets/images/logo-light.png">
   <link rel="apple-touch-icon" href="assets/images/logo-light.png">
@@ -19,13 +19,97 @@
   <div id="site-header"></div>
 
   <main>
-    <!-- Placeholder – the full about page will be built here later -->
-    <section class="page-hero">
+    <!-- ============ HEADER BANNER ============ -->
+    <section class="page-hero about-hero">
       <div class="container">
-        <p class="eyebrow eyebrow-lg" data-i18n="page.comingSoon"></p>
-        <h1 data-i18n="page.about.title"></h1>
-        <p data-i18n="page.about.text"></p>
-        <a class="btn btn-outline btn-lg" href="index.html" data-i18n="btn.backHome"></a>
+        <p class="eyebrow eyebrow-lg" data-i18n="about.eyebrow"></p>
+        <h1 data-i18n="about.title"></h1>
+        <p data-i18n="about.lead"></p>
+      </div>
+    </section>
+
+    <!-- ============ INTRO ============ -->
+    <section class="section about-intro">
+      <div class="container about-intro-grid">
+        <div class="about-text">
+          <p class="about-first" data-i18n="about.intro1"></p>
+          <p data-i18n="about.intro2"></p>
+          <p data-i18n="about.intro3"></p>
+        </div>
+        <ul class="about-stats">
+          <li><strong>2024</strong><span data-i18n="about.stat.year"></span></li>
+          <li><strong>6</strong><span data-i18n="about.stat.people"></span></li>
+          <li><strong>24/7</strong><span data-i18n="about.stat.support"></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ VEHICLES ============ -->
+    <section class="section about-vehicles" id="vehicles">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow" data-i18n="about.vehicles.eyebrow"></p>
+          <h2 data-i18n="about.vehicles.title"></h2>
+        </header>
+        <div class="vehicles-grid">
+          <div class="vehicles-image">
+            <picture>
+              <source srcset="assets/images/fleet-e-class.webp" type="image/webp">
+              <img src="assets/images/fleet-e-class.png" data-i18n-attr="alt:fleet.eclass.alt" alt="Black Mercedes-Benz E-Class" width="1600" height="648" loading="lazy">
+            </picture>
+          </div>
+          <ul class="vehicle-list">
+            <li class="is-featured"><span data-icon="car"></span><div><h3 data-i18n="about.v1.name"></h3><p data-i18n="about.v1.text"></p></div></li>
+            <li><span data-icon="van"></span><div><h3 data-i18n="about.v2.name"></h3><p data-i18n="about.v2.text"></p></div></li>
+            <li><span data-icon="van"></span><div><h3 data-i18n="about.v3.name"></h3><p data-i18n="about.v3.text"></p></div></li>
+            <li><span data-icon="car"></span><div><h3 data-i18n="about.v4.name"></h3><p data-i18n="about.v4.text"></p></div></li>
+            <li><span data-icon="plus"></span><div><h3 data-i18n="about.v5.name"></h3><p data-i18n="about.v5.text"></p></div></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SERVICE & VALUES ============ -->
+    <section class="why about-service">
+      <div class="container">
+        <p class="eyebrow eyebrow-lg" data-i18n="about.service.eyebrow"></p>
+        <h2 data-i18n="about.service.title"></h2>
+        <p class="about-service-text" data-i18n="about.service.text"></p>
+        <p class="values-title" data-i18n="about.values.title"></p>
+        <ul class="values-grid">
+          <li><span data-icon="shield"></span><span data-i18n="about.value.safety"></span></li>
+          <li><span data-icon="clock"></span><span data-i18n="about.value.punctuality"></span></li>
+          <li><span data-icon="gem"></span><span data-i18n="about.value.comfort"></span></li>
+          <li><span data-icon="check"></span><span data-i18n="about.value.reliability"></span></li>
+          <li><span data-icon="lock"></span><span data-i18n="about.value.discretion"></span></li>
+          <li><span data-icon="headset"></span><span data-i18n="about.value.service"></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ PHILOSOPHY ============ -->
+    <section class="section about-philosophy">
+      <div class="container">
+        <p class="eyebrow" data-i18n="about.philosophy.eyebrow"></p>
+        <blockquote data-i18n="about.philosophy.quote"></blockquote>
+        <p data-i18n="about.philosophy.text"></p>
+      </div>
+    </section>
+
+    <!-- ============ CONTACT ============ -->
+    <section class="cta about-contact">
+      <div class="container about-contact-inner">
+        <div>
+          <p class="eyebrow" data-i18n="about.contact.eyebrow"></p>
+          <h2 data-i18n="about.contact.title"></h2>
+          <p class="about-closing" data-i18n="about.closing"></p>
+        </div>
+        <ul class="about-contact-list">
+          <li><a href="tel:+4917643241205"><span data-icon="phone"></span>0176 432 412 05</a></li>
+          <li><a href="tel:+4915751235215"><span data-icon="phone"></span>01575 1235 215</a></li>
+          <li><a href="mailto:info.daydriveservice@gmail.com"><span data-icon="mail"></span>info.daydriveservice@gmail.com</a></li>
+          <li><a class="btn btn-gold btn-lg" href="booking.html"><span data-i18n="btn.bookRide"></span><span data-icon="arrow"></span></a></li>
+        </ul>
       </div>
     </section>
   </main>

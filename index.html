@@ -32,11 +32,11 @@
           <p class="hero-lead" data-i18n-html="hero.lead"></p>
 
           <ul class="hero-services">
-            <li><a href="#services"><span data-icon="plane"></span><span data-i18n="svc.airport"></span></a></li>
-            <li><a href="#services"><span data-icon="briefcase"></span><span data-i18n="svc.business"></span></a></li>
-            <li><a href="#services"><span data-icon="gem"></span><span data-i18n="svc.events"></span></a></li>
-            <li><a href="#services"><span data-icon="clock"></span><span data-i18n="svc.hourly"></span></a></li>
-            <li><a href="#services"><span data-icon="pin"></span><span data-i18n="svc.city"></span></a></li>
+            <li><a href="#services" data-service="airport"><span data-icon="plane"></span><span data-i18n="svc.airport"></span></a></li>
+            <li><a href="#services" data-service="business"><span data-icon="briefcase"></span><span data-i18n="svc.business"></span></a></li>
+            <li><a href="#services" data-service="wedding"><span data-icon="gem"></span><span data-i18n="svc.events"></span></a></li>
+            <li><a href="#services" data-service="hourly"><span data-icon="clock"></span><span data-i18n="svc.hourly"></span></a></li>
+            <li><a href="#services" data-service="vip"><span data-icon="pin"></span><span data-i18n="svc.city"></span></a></li>
           </ul>
 
           <div class="hero-buttons">
@@ -66,6 +66,7 @@
               <span data-icon="plane" class="service-icon"></span>
               <h3 data-i18n="svc.airport"></h3>
               <p data-i18n="services.airport.text"></p>
+              <button class="card-link" type="button" data-service="airport"><span data-i18n="services.more"></span><span data-icon="arrow"></span></button>
             </div>
           </article>
           <article class="service-card">
@@ -74,6 +75,7 @@
               <span data-icon="briefcase" class="service-icon"></span>
               <h3 data-i18n="svc.business"></h3>
               <p data-i18n="services.business.text"></p>
+              <button class="card-link" type="button" data-service="business"><span data-i18n="services.more"></span><span data-icon="arrow"></span></button>
             </div>
           </article>
           <article class="service-card">
@@ -82,6 +84,7 @@
               <span data-icon="rings" class="service-icon"></span>
               <h3 data-i18n="svc.weddings"></h3>
               <p data-i18n="services.weddings.text"></p>
+              <button class="card-link" type="button" data-service="wedding"><span data-i18n="services.more"></span><span data-icon="arrow"></span></button>
             </div>
           </article>
           <article class="service-card">
@@ -90,6 +93,7 @@
               <span data-icon="clock" class="service-icon"></span>
               <h3 data-i18n="svc.hourly"></h3>
               <p data-i18n="services.hourly.text"></p>
+              <button class="card-link" type="button" data-service="hourly"><span data-i18n="services.more"></span><span data-icon="arrow"></span></button>
             </div>
           </article>
           <article class="service-card">
@@ -98,6 +102,7 @@
               <span data-icon="pin" class="service-icon"></span>
               <h3 data-i18n="svc.city"></h3>
               <p data-i18n="services.city.text"></p>
+              <button class="card-link" type="button" data-service="vip"><span data-i18n="services.more"></span><span data-icon="arrow"></span></button>
             </div>
           </article>
         </div>
@@ -153,7 +158,7 @@
             <div class="slider-dots"></div>
           </div>
 
-          <a class="btn btn-outline-gold btn-lg fleet-cta" href="#fleet"><span data-i18n="btn.viewFleet"></span><span data-icon="arrow"></span></a>
+          <a class="btn btn-outline-gold btn-lg fleet-cta" href="#fleet" data-modal-open="fleet-modal"><span data-i18n="btn.viewFleet"></span><span data-icon="arrow"></span></a>
         </div>
       </div>
     </section>
@@ -171,6 +176,171 @@
         </div>
       </div>
     </section>
+    <!-- ============ SERVICES POP-UP (opens from the service icons and cards) ============ -->
+    <dialog class="svc-modal" id="services-modal" aria-labelledby="svc-modal-title">
+      <div class="svc-modal-head">
+        <div>
+          <p class="eyebrow" data-i18n="modal.eyebrow"></p>
+          <h2 id="svc-modal-title" data-i18n="modal.title"></h2>
+        </div>
+        <button class="svc-close" type="button" data-close data-i18n-attr="aria-label:modal.close"><span data-icon="close"></span></button>
+      </div>
+      <div class="svc-modal-body">
+        <ol class="svc-items">
+          <li class="svc-item" id="svc-vip" data-svc="vip">
+            <span data-icon="gem" class="svc-icon"></span>
+            <div>
+              <h3><span class="svc-num"></span><span data-i18n="m.vip.title"></span></h3>
+              <p data-i18n="m.vip.text"></p>
+            </div>
+          </li>
+          <li class="svc-item" id="svc-airport" data-svc="airport">
+            <span data-icon="plane" class="svc-icon"></span>
+            <div>
+              <h3><span class="svc-num"></span><span data-i18n="m.airport.title"></span></h3>
+              <p data-i18n="m.airport.text"></p>
+            </div>
+          </li>
+          <li class="svc-item" id="svc-business" data-svc="business">
+            <span data-icon="briefcase" class="svc-icon"></span>
+            <div>
+              <h3><span class="svc-num"></span><span data-i18n="m.business.title"></span></h3>
+              <p data-i18n="m.business.text"></p>
+            </div>
+          </li>
+          <li class="svc-item" id="svc-wedding" data-svc="wedding">
+            <span data-icon="rings" class="svc-icon"></span>
+            <div>
+              <h3><span class="svc-num"></span><span data-i18n="m.wedding.title"></span></h3>
+              <p data-i18n="m.wedding.text"></p>
+            </div>
+          </li>
+          <li class="svc-item" id="svc-family" data-svc="family">
+            <span data-icon="users" class="svc-icon"></span>
+            <div>
+              <h3><span class="svc-num"></span><span data-i18n="m.family.title"></span></h3>
+              <p data-i18n="m.family.text"></p>
+            </div>
+          </li>
+          <li class="svc-item" id="svc-school" data-svc="school">
+            <span data-icon="school" class="svc-icon"></span>
+            <div>
+              <h3><span class="svc-num"></span><span data-i18n="m.school.title"></span></h3>
+              <p data-i18n="m.school.text"></p>
+              <p data-i18n="m.school.text2"></p>
+            </div>
+          </li>
+          <li class="svc-item" id="svc-longterm" data-svc="longterm">
+            <span data-icon="calendar" class="svc-icon"></span>
+            <div>
+              <h3><span class="svc-num"></span><span data-i18n="m.longterm.title"></span></h3>
+              <p class="svc-q" data-i18n="m.longterm.q"></p>
+              <p data-i18n="m.longterm.text"></p>
+              <p class="svc-sub" data-i18n="m.longterm.example"></p>
+              <ul class="svc-list"><li data-i18n="m.longterm.l1"></li><li data-i18n="m.longterm.l2"></li><li data-i18n="m.longterm.l3"></li><li data-i18n="m.longterm.l4"></li><li data-i18n="m.longterm.l5"></li><li data-i18n="m.longterm.l6"></li></ul>
+              <p data-i18n="m.longterm.offer"></p>
+            </div>
+          </li>
+          <li class="svc-item" id="svc-hourly" data-svc="hourly">
+            <span data-icon="clock" class="svc-icon"></span>
+            <div>
+              <h3><span class="svc-num"></span><span data-i18n="m.hourly.title"></span></h3>
+              <p data-i18n="m.hourly.text"></p>
+            </div>
+          </li>
+        </ol>
+      </div>
+      <div class="svc-modal-foot">
+        <p data-i18n="modal.cta"></p>
+        <div class="svc-modal-actions">
+          <a class="btn btn-outline-gold" href="tel:+4917643241205"><span data-icon="phone"></span><span data-i18n="btn.call"></span></a>
+          <a class="btn btn-gold" href="booking.html"><span data-i18n="btn.bookRide"></span><span data-icon="arrow"></span></a>
+        </div>
+      </div>
+    </dialog>
+    <!-- ============ FLEET POP-UP (opens from "View Fleet") ============ -->
+    <dialog class="svc-modal fm-modal" id="fleet-modal" aria-labelledby="fm-modal-title">
+      <div class="svc-modal-head">
+        <div>
+          <p class="eyebrow" data-i18n="fm.eyebrow"></p>
+          <h2 id="fm-modal-title" data-i18n="fm.title"></h2>
+        </div>
+        <button class="svc-close" type="button" data-close data-i18n-attr="aria-label:modal.close"><span data-icon="close"></span></button>
+      </div>
+      <div class="svc-modal-body">
+        <p class="fm-intro" data-i18n="fm.intro"></p>
+        <ul class="fm-grid">
+          <li class="fm-card is-featured">
+            <div class="fm-media fm-photo"><picture><source srcset="assets/images/fleet-e-class.webp" type="image/webp"><img src="assets/images/fleet-e-class.png" data-i18n-attr="alt:fleet.eclass.alt" alt="Mercedes-Benz E-Class" width="1600" height="648" loading="lazy"></picture></div>
+            <div class="fm-body">
+              <h3 data-i18n="fm.eclass.name"></h3>
+              <p class="fm-tag" data-i18n="fm.eclass.tag"></p>
+              <p data-i18n="fm.eclass.text"></p>
+            </div>
+          </li>
+          <li class="fm-card">
+            <div class="fm-media"><span data-icon="van"></span></div>
+            <div class="fm-body">
+              <h3 data-i18n="fm.touran.name"></h3>
+              <p class="fm-tag" data-i18n="fm.touran.tag"></p>
+              <p data-i18n="fm.touran.text"></p>
+            </div>
+          </li>
+          <li class="fm-card">
+            <div class="fm-media"><span data-icon="van"></span></div>
+            <div class="fm-body">
+              <h3 data-i18n="fm.proace.name"></h3>
+              <p class="fm-tag" data-i18n="fm.proace.tag"></p>
+              <p data-i18n="fm.proace.text"></p>
+            </div>
+          </li>
+          <li class="fm-card">
+            <div class="fm-media"><span data-icon="car"></span></div>
+            <div class="fm-body">
+              <h3 data-i18n="fm.corolla.name"></h3>
+              <p class="fm-tag" data-i18n="fm.corolla.tag"></p>
+              <p data-i18n="fm.corolla.text"></p>
+            </div>
+          </li>
+          <li class="fm-card">
+            <div class="fm-media"><span data-icon="car"></span></div>
+            <div class="fm-body">
+              <h3 data-i18n="fm.chr.name"></h3>
+              <p class="fm-tag" data-i18n="fm.chr.tag"></p>
+              <p data-i18n="fm.chr.text"></p>
+            </div>
+          </li>
+          <li class="fm-card is-more">
+            <div class="fm-media"><span data-icon="plus"></span></div>
+            <div class="fm-body">
+              <h3 data-i18n="fm.more.name"></h3>
+              <p class="fm-tag" data-i18n="fm.more.tag"></p>
+              <p data-i18n="fm.more.text"></p>
+            </div>
+          </li>
+        </ul>
+        <div class="fm-wish">
+          <span data-icon="headset"></span>
+          <div>
+            <h3 data-i18n="fm.wish.title"></h3>
+            <p data-i18n="fm.wish.q"></p>
+            <p data-i18n="fm.wish.text"></p>
+          </div>
+        </div>
+        <div class="fm-brand">
+          <p class="fm-brand-name">Day Drive Service</p>
+          <p class="fm-brand-values" data-i18n="fm.brand.values"></p>
+          <p data-i18n="fm.brand.text"></p>
+        </div>
+      </div>
+      <div class="svc-modal-foot">
+        <p data-i18n="modal.cta"></p>
+        <div class="svc-modal-actions">
+          <a class="btn btn-outline-gold" href="tel:+4917643241205"><span data-icon="phone"></span><span data-i18n="btn.call"></span></a>
+          <a class="btn btn-gold" href="booking.html"><span data-i18n="btn.bookRide"></span><span data-icon="arrow"></span></a>
+        </div>
+      </div>
+    </dialog>
   </main>
 
   <div id="site-footer"></div>

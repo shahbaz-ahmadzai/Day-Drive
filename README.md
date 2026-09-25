@@ -15,17 +15,19 @@ python3 -m http.server 8000
 
 | File | What it is |
 |------|------------|
-| `index.html` | Main page: hero, Services, Why us, Fleet, Book-now banner, Contact (footer) |
-| `about.html` | About Us – placeholder, to be built |
-| `prices.html` | Prices – placeholder, to be built |
-| `booking.html` | Booking page (all "Book a Ride" / "Book Now" buttons go here) – placeholder |
+| `index.html` | Main page: hero, Services, Why us, Fleet, Book-now banner, Contact (footer), plus the Services and Fleet pop-up windows |
+| `about.html` | About Us |
+| `prices.html` | Prices, with a pre-filled "Get a Quote" e-mail |
+| `booking.html` | Booking page (all "Book a Ride" / "Book Now" buttons go here) – placeholder, to be built |
 
 ## Menu behaviour
 
 - Logo and **Home** → top of the main page
 - **Services**, **Fleet**, **Contact** → scroll smoothly to that part of the main page (works from the other pages too)
 - **About Us**, **Prices** → open their own page
-- **Book a Ride / Book Now / Get a Quote** → `booking.html`
+- **Book a Ride / Book Now** → `booking.html`
+- Service icons and service cards → **Services pop-up**, opened at the service that was clicked
+- **View Fleet** → **Fleet pop-up**
 
 ## Languages (English / Deutsch)
 
@@ -59,6 +61,7 @@ Each car is one `.fleet-slide` block in `index.html`. Copy the block to add anot
 
 ## Still to do
 
-- About, Prices and Booking pages
+- Booking page
+- Photos of the VW Touran, Toyota Proace City, Toyota Corolla and Toyota C-HR
 - Imprint (Impressum), Privacy Policy (Datenschutz), Terms (AGB) – required for a German website; footer links are ready
 - Real social-media links

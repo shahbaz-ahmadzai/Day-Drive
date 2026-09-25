@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0e1116">
   <meta name="format-detection" content="telephone=no">
-  <title>Day Drive Service</title>
+  <title>Prices | Day Drive Service</title>
   <meta name="description" content="Premium chauffeur service in Frankfurt.">
   <link rel="icon" href="assets/images/logo-light.png">
   <link rel="apple-touch-icon" href="assets/images/logo-light.png">
@@ -19,13 +19,90 @@
   <div id="site-header"></div>
 
   <main>
-    <!-- Placeholder – the full prices page will be built here later -->
-    <section class="page-hero">
+    <!-- ============ HEADER BANNER ============ -->
+    <section class="page-hero about-hero">
       <div class="container">
-        <p class="eyebrow eyebrow-lg" data-i18n="page.comingSoon"></p>
-        <h1 data-i18n="page.prices.title"></h1>
-        <p data-i18n="page.prices.text"></p>
-        <a class="btn btn-outline btn-lg" href="index.html" data-i18n="btn.backHome"></a>
+        <p class="eyebrow eyebrow-lg" data-i18n="pr.eyebrow"></p>
+        <h1 data-i18n="pr.title"></h1>
+        <p data-i18n="pr.lead"></p>
+      </div>
+    </section>
+
+    <!-- ============ WHAT THE PRICE DEPENDS ON ============ -->
+    <section class="why price-factors">
+      <div class="container">
+        <h2 class="eyebrow eyebrow-lg why-title" data-i18n="pr.factors"></h2>
+        <ul class="factor-list"><li><span data-icon="pin"></span><span data-i18n="pr.f.distance"></span></li><li><span data-icon="clock"></span><span data-i18n="pr.f.duration"></span></li><li><span data-icon="car"></span><span data-i18n="pr.f.vehicle"></span></li><li><span data-icon="users"></span><span data-i18n="pr.f.people"></span></li><li><span data-icon="check"></span><span data-i18n="pr.f.needs"></span></li></ul>
+      </div>
+    </section>
+
+    <!-- ============ PRICES BY SERVICE ============ -->
+    <section class="section prices">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow" data-i18n="pr.list.eyebrow"></p>
+          <h2 data-i18n="pr.list.title"></h2>
+        </header>
+        <ul class="price-grid">
+          <li class="price-card">
+            <span data-icon="plane" class="price-icon"></span>
+            <h3 data-i18n="pr.airport"></h3>
+            <p class="price-value" data-i18n="pr.price"></p>
+            <a class="card-link price-link" href="#quote"><span data-i18n="pr.request"></span><span data-icon="arrow"></span></a>
+          </li>
+          <li class="price-card">
+            <span data-icon="gem" class="price-icon"></span>
+            <h3 data-i18n="pr.vip"></h3>
+            <p class="price-value" data-i18n="pr.price"></p>
+            <a class="card-link price-link" href="#quote"><span data-i18n="pr.request"></span><span data-icon="arrow"></span></a>
+          </li>
+          <li class="price-card">
+            <span data-icon="briefcase" class="price-icon"></span>
+            <h3 data-i18n="pr.business"></h3>
+            <p class="price-value" data-i18n="pr.price"></p>
+            <a class="card-link price-link" href="#quote"><span data-i18n="pr.request"></span><span data-icon="arrow"></span></a>
+          </li>
+          <li class="price-card">
+            <span data-icon="rings" class="price-icon"></span>
+            <h3 data-i18n="pr.wedding"></h3>
+            <p class="price-value" data-i18n="pr.price"></p>
+            <a class="card-link price-link" href="#quote"><span data-i18n="pr.request"></span><span data-icon="arrow"></span></a>
+          </li>
+          <li class="price-card">
+            <span data-icon="school" class="price-icon"></span>
+            <h3 data-i18n="pr.school"></h3>
+            <p class="price-value" data-i18n="pr.price"></p>
+            <a class="card-link price-link" href="#quote"><span data-i18n="pr.request"></span><span data-icon="arrow"></span></a>
+          </li>
+          <li class="price-card">
+            <span data-icon="calendar" class="price-icon"></span>
+            <h3 data-i18n="pr.longterm"></h3>
+            <p class="price-value" data-i18n="pr.price"></p>
+            <a class="card-link price-link" href="#quote"><span data-i18n="pr.request"></span><span data-icon="arrow"></span></a>
+          </li>
+          <li class="price-card">
+            <span data-icon="clock" class="price-icon"></span>
+            <h3 data-i18n="pr.hourly"></h3>
+            <p class="price-value" data-i18n="pr.price"></p>
+            <a class="card-link price-link" href="#quote"><span data-i18n="pr.request"></span><span data-icon="arrow"></span></a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ GET A QUOTE ============ -->
+    <section class="cta about-contact price-quote" id="quote">
+      <div class="container quote-inner">
+        <div class="quote-text">
+          <h2 data-i18n="pr.quote.title"></h2>
+          <p data-i18n="pr.quote.text"></p>
+          <ul class="quote-list"><li><span data-icon="check"></span><span data-i18n="pr.q.from"></span></li><li><span data-icon="check"></span><span data-i18n="pr.q.to"></span></li><li><span data-icon="check"></span><span data-i18n="pr.q.date"></span></li><li><span data-icon="check"></span><span data-i18n="pr.q.time"></span></li><li><span data-icon="check"></span><span data-i18n="pr.q.people"></span></li></ul>
+        </div>
+        <div class="quote-actions">
+          <a class="btn btn-gold btn-lg" href="booking.html"><span data-i18n="btn.bookRide"></span><span data-icon="arrow"></span></a>
+          <a class="btn btn-outline btn-lg" href="mailto:info.daydriveservice@gmail.com" data-i18n-attr="href:pr.mailto"><span data-icon="mail"></span><span data-i18n="btn.getQuote"></span></a>
+          <p class="quote-call"><span data-i18n="pr.quote.call"></span> <a href="tel:+4917643241205">0176 432 412 05</a></p>
+        </div>
       </div>
     </section>
   </main>
