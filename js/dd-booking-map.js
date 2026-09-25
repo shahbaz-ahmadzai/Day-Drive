@@ -162,9 +162,12 @@
     try {
       var cfg = await API.getBookingConfig();
       S.areas = (cfg && cfg.companies) || [];
+      S.paused = cfg && cfg.bookingEnabled === false;
+      if (S.paused) showMessage(T("bk.err.paused"), "error");
     } catch (e) {
       console.error("Booking config error:", e);
       S.areas = [];
+      showMessage(e.message || T("bk.err.server"), "error");
     }
     drawServiceAreas();
     checkArea(false);
@@ -402,7 +405,7 @@
     } catch (e) {
       if (my !== S.routeRun) return;
       console.warn("Routing failed, using an estimate:", e);
-      // estimate: straight line × 1.3, average 55 km/h – keeps the demo usable
+      // estimate: straight line × 1.3, average 55 km/h – used when Google can't calculate the route
       var km = 0;
       for (var i = 1; i < points.length; i++) km += haversineKm(points[i - 1], points[i]);
       S.distanceKm = km * 1.3;
@@ -435,7 +438,7 @@
     updateBookButton();
   }
   function updateBookButton() {
-    el.book.disabled = !(S.pickup && S.destination && S.distanceKm != null && S.areaOk && el.date.value && el.time.value && timeIsValid());
+    el.book.disabled = S.paused || !(S.pickup && S.destination && S.distanceKm != null && S.areaOk && el.date.value && el.time.value && timeIsValid());
   }
 
   /* ==========================================================
@@ -497,6 +500,7 @@
     if (!S.pickup || !S.destination || !el.date.value || !el.time.value || S.distanceKm == null) {
       showMessage(T("bk.err.incomplete"), "error"); return;
     }
+    if (S.paused) { showMessage(T("bk.err.paused"), "error"); return; }
     if (!timeIsValid()) { showMessage(T("bk.err.notice"), "error"); return; }
     if (!checkArea(true)) return;
     var trip = buildTripPayload();

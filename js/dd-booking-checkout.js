@@ -25,8 +25,12 @@
     overlay: $("ddbOverlay"),
     pModal: $("ddbPaymentModal"),
     pVehicle: $("ddbPayVehicle"), pAmount: $("ddbPayAmount"), pCountdown: $("ddbPayCountdown"), pRef: $("ddbPayRef"),
-    pMsg: $("ddbPayMessage"), pPayPal: $("ddbPayPayPal"), pApple: $("ddbPayApple"), pCard: $("ddbPayCard")
+    pMsg: $("ddbPayMessage"), pPayPal: $("ddbPayPayPal"), pApple: $("ddbPayApple"), pCard: $("ddbPayCard"),
+    vKicker: $("ddbVKicker"), payNote: $("ddbPayNote"),
+    dModal: $("ddbDoneModal"), dTitle: $("ddbDTitle"), dLead: $("ddbDoneLead"), dRef: $("ddbDoneRef"), dWhen: $("ddbDoneWhen"),
+    dVehicle: $("ddbDoneVehicle"), dRoute: $("ddbDoneRoute"), dAmount: $("ddbDoneAmount"), dAgain: $("ddbDoneAgain")
   };
+  var payOnRide = function () { return C.PAYMENT_MODE !== "online"; };
 
   var S = { trip: null, vehicles: [], selected: null, booking: null, timer: null, run: 0 };
 
@@ -54,7 +58,25 @@
   }
   function closeDialog(d) {
     if (d.open) { if (typeof d.close === "function") d.close(); else d.removeAttribute("open"); }
-    if (!el.vModal.open && !el.pModal.open) document.body.classList.remove("modal-open");
+    if (!el.vModal.open && !el.pModal.open && !el.dModal.open) document.body.classList.remove("modal-open");
+  }
+  /* texts that depend on the payment mode (set in the admin panel) */
+  function applyMode() {
+    var key = payOnRide() ? "bk.v.kicker2" : "bk.v.kicker";
+    el.vKicker.setAttribute("data-i18n", key);
+    el.vKicker.textContent = T(key);
+    el.payNote.hidden = !payOnRide();
+    updateContinue();
+  }
+  /* server messages are English – show the translated text where we know it */
+  function friendlyError(err) {
+    var m = (err && err.message) || "";
+    if (/just been booked/i.test(m)) return T("bk.e.gone");
+    if (/outside our service area/i.test(m)) return T("bk.area.text");
+    if (/at least \d+ minutes/i.test(m)) return T("bk.err.notice");
+    if (/several bookings/i.test(m)) return T("bk.e.tooMany");
+    if (/paused/i.test(m)) return T("bk.err.paused");
+    return m || T("bk.err.server");
   }
   function formMessage(text, type) {
     el.formMsg.textContent = text || "";
@@ -100,6 +122,7 @@
       console.error("Vehicle loading error:", e);
       el.count.textContent = T("bk.v.loadError");
       el.empty.hidden = false;
+      formMessage(friendlyError(e), "error");
     } finally {
       if (my === S.run) el.loading.hidden = true;
     }
@@ -154,7 +177,7 @@
   }
   function updateContinue() {
     el.cont.disabled = !S.selected;
-    el.cont.textContent = S.selected ? T("bk.c.continue", { price: money(S.selected.price) }) : T("bk.c.selectFirst");
+    el.cont.textContent = S.selected ? T(payOnRide() ? "bk.c.book" : "bk.c.continue", { price: money(S.selected.price) }) : T("bk.c.selectFirst");
   }
 
   /* ---------- customer form ---------- */
@@ -203,23 +226,21 @@
     el.cont.disabled = true; el.cont.textContent = T("bk.c.saving");
     el.overlay.hidden = false;
     try {
-      // check again that the vehicle is still free (someone else could have booked it)
-      var fresh = await API.getAvailableVehicles(S.trip);
-      var still = (fresh.vehicles || []).find(function (v) { return v.id === S.selected.id; });
-      if (!still) throw new Error(T("bk.e.gone"));
-      S.selected.price = still.price;
+      // the server checks again that the vehicle is still free and calculates the final price
       var payload = buildBookingPayload();
       var res = await API.createBooking(payload);
-      S.booking = Object.assign({}, res, { vehicleName: S.selected.name });
-      try { sessionStorage.setItem("ddBooking", JSON.stringify({ request: payload, response: res })); } catch (err) {}
+      S.booking = Object.assign({}, res, { vehicleName: S.selected.name, customer: payload.customer, trip: S.trip });
+      try { sessionStorage.setItem("ddBooking", JSON.stringify({ reference: res.bookingReference, bookingId: res.bookingId })); } catch (err) {}
       el.overlay.hidden = true;
       closeDialog(el.vModal);
-      openPayment();
+      if (res.status === "pending_payment") openPayment();
+      else openDone();
     } catch (err) {
       console.error("Booking error:", err);
       el.overlay.hidden = true;
-      formMessage(err.message || T("bk.v.loadError"), "error");
+      formMessage(friendlyError(err), "error");
       updateContinue();
+      if (/just been booked/i.test(err.message || "")) { resetSelection(); loadVehicles(); }
     }
   });
 
@@ -258,7 +279,7 @@
         el.pCountdown.textContent = "00:00";
         el.pMsg.textContent = T("bk.p.expired"); el.pMsg.className = "ddb-pay-message is-error";
         [el.pPayPal, el.pApple, el.pCard].forEach(function (x) { x.disabled = true; });
-        if (S.booking) API.cancelPendingBooking({ bookingId: S.booking.bookingId, reason: "expired" });
+        if (S.booking) API.cancelPendingBooking({ bookingId: S.booking.bookingId, clientToken: S.booking.clientToken, reason: "expired" });
         return;
       }
       var s = Math.floor(left / 1000);
@@ -269,15 +290,38 @@
   }
   async function pay(method, label) {
     if (!S.booking) return;
-    if (C.DEMO_MODE) {
-      // show what would be sent; real PayPal / Apple Pay / card buttons come with the backend
-      await API.createPaymentOrder({ bookingId: S.booking.bookingId, amount: Number(S.booking.amount).toFixed(2),
+    // online payment (PayPal / Apple Pay / card) is added together with the PayPal connection
+    try {
+      await API.createPaymentOrder({ bookingId: S.booking.bookingId, clientToken: S.booking.clientToken, amount: Number(S.booking.amount).toFixed(2),
         currency: C.CURRENCY, paymentMethod: method, verificationMethod: method === "card" ? "SCA_WHEN_REQUIRED" : null });
-      el.pMsg.textContent = T("bk.p.demo", { method: label });
-      el.pMsg.className = "ddb-pay-message is-info";
-      return;
+    } catch (e) {
+      el.pMsg.textContent = e.message; el.pMsg.className = "ddb-pay-message is-error";
     }
   }
+
+  /* ==========================================================
+     Done – booking confirmed (pay on the ride)
+     ========================================================== */
+  function fillDone() {
+    var b = S.booking; if (!b) return;
+    var c = b.customer || {}, t = b.trip || {};
+    el.dTitle.textContent = T("bk.d.title", { name: c.firstName || "" });
+    el.dLead.textContent = b.smsQueued ? T("bk.d.lead", { phone: c.phone || "" }) : T("bk.d.leadNoSms");
+    el.dRef.textContent = b.bookingReference || "—";
+    el.dWhen.textContent = formatDate(t.bookingDate) + ", " + t.bookingTime + (window.DD_LANG === "de" ? " Uhr" : "");
+    el.dVehicle.textContent = b.vehicleName || "—";
+    el.dRoute.textContent = (t.pickup ? t.pickup.address : "") + " → " + (t.destination ? t.destination.address : "");
+    el.dAmount.textContent = price(b.amount);
+  }
+  function openDone() {
+    fillDone();
+    openDialog(el.dModal);
+  }
+  el.dAgain.addEventListener("click", function () {
+    try { sessionStorage.removeItem("ddBookingTrip"); } catch (e) {}
+    location.href = "booking.html";
+  });
+
   el.pPayPal.addEventListener("click", function () { pay("paypal", "PayPal"); });
   el.pApple.addEventListener("click", function () { pay("applepay", "Apple Pay"); });
   el.pCard.addEventListener("click", function () { pay("card", T("bk.p.card")); });
@@ -285,15 +329,16 @@
   /* ---------- closing ---------- */
   el.vModal.querySelectorAll("[data-ddb-close]").forEach(function (b) { b.addEventListener("click", function () { closeDialog(el.vModal); }); });
   el.pModal.querySelectorAll("[data-ddb-close]").forEach(function (b) { b.addEventListener("click", function () { closeDialog(el.pModal); }); });
-  [el.vModal, el.pModal].forEach(function (d) {
+  el.dModal.querySelectorAll("[data-ddb-close]").forEach(function (b) { b.addEventListener("click", function () { closeDialog(el.dModal); }); });
+  [el.vModal, el.pModal, el.dModal].forEach(function (d) {
     d.addEventListener("click", function (e) { if (e.target === d) closeDialog(d); });
     d.addEventListener("close", function () {
-      if (!el.vModal.open && !el.pModal.open) document.body.classList.remove("modal-open");
+      if (!el.vModal.open && !el.pModal.open && !el.dModal.open) document.body.classList.remove("modal-open");
     });
   });
   el.pModal.addEventListener("close", function () {
     clearInterval(S.timer);
-    if (S.booking) { API.cancelPendingBooking({ bookingId: S.booking.bookingId, reason: "closed" }); S.booking = null; }
+    if (S.booking && S.booking.status === "pending_payment") { API.cancelPendingBooking({ bookingId: S.booking.bookingId, clientToken: S.booking.clientToken, reason: "closed" }); S.booking = null; }
   });
 
   /* ---------- language change ---------- */
@@ -303,8 +348,11 @@
     updateContinue();
     if (S.selected) el.selPrice.textContent = price(S.selected.price);
     if (S.booking) el.pAmount.textContent = price(S.booking.amount);
+    if (S.booking && el.dModal.open) fillDone();
+    applyMode();
   });
+  document.addEventListener("dd:booking-config", applyMode);
 
   document.addEventListener("dd:open-booking", function (e) { openVehicleStep(e.detail); });
-  updateContinue();
+  applyMode();
 })();
