@@ -20,8 +20,6 @@
   <div id="site-header"></div>
 
   <main class="ddb-page">
-    <p class="ddb-demo-banner" id="ddbDemoBanner" hidden><span data-icon="gem"></span><span data-i18n="bk.demo"></span></p>
-
     <!-- ============ STEP 1: ROUTE ============ -->
     <section class="ddb-route" aria-labelledby="ddbTitle">
 
@@ -259,9 +257,5 @@
   <script src="js/dd-booking-api.js?v=202609251141"></script>
   <script src="js/dd-booking-map.js?v=202609251141"></script>
   <script src="js/dd-booking-checkout.js?v=202609251141"></script>
-  <script>
-    // show the demo notice while the booking runs on sample data
-    if (window.DDBookingAPI && window.DDBookingAPI.config.DEMO_MODE) document.getElementById("ddbDemoBanner").hidden = false;
-  </script>
 </body>
 </html>
