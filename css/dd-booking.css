@@ -415,3 +415,20 @@
   .ddb-modes { grid-template-columns: 1fr; }
   .ddb-vehicle-media { width: 96px; }
 }
+
+/* ---------- pay on the ride + booking confirmed ---------- */
+.ddb-pay-note { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 14px; padding: 11px 14px; background: #faf4e5; color: #6b4f16; border-radius: 4px; font-size: 14.5px; line-height: 1.45; }
+.ddb-pay-note .icon, .ddb-done-pay .icon { width: 20px; height: 20px; flex: none; color: var(--gold-strong); }
+.ddb-done-kicker { display: inline-flex; align-items: center; gap: 8px; color: #2f7a47 !important; }
+.ddb-done-kicker .icon { width: 18px; height: 18px; }
+.ddb-done-modal .ddb-pay-summary .ddb-done-route { grid-column: 1 / -1; }
+.ddb-done-modal .ddb-pay-summary .is-total dd { font-size: 30px; }
+.ddb-done-pay { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0 6px; font-size: 15px; }
+.ddb-done-help { margin: 6px 0 0; color: var(--muted); font-size: 14.5px; }
+.ddb-done-help a { color: var(--gold-strong); font-weight: 600; white-space: nowrap; }
+.ddb-done-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 20px; }
+.ddb-done-actions .btn-outline { color: var(--text); background: var(--white); }
+.ddb-done-actions .btn-outline:hover { color: #121212; }
+@media (max-width: 640px) {
+  .ddb-done-actions .btn { flex: 1 1 100%; justify-content: center; }
+}
