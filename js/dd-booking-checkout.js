@@ -65,6 +65,8 @@
     var key = payOnRide() ? "bk.v.kicker2" : "bk.v.kicker";
     el.vKicker.setAttribute("data-i18n", key);
     el.vKicker.textContent = T(key);
+    var lead = $("ddbVLead"), lk = payOnRide() ? "bk.v.lead2" : "bk.v.lead";
+    if (lead) { lead.setAttribute("data-i18n", lk); lead.textContent = T(lk); }
     el.payNote.hidden = !payOnRide();
     updateContinue();
   }
@@ -141,15 +143,16 @@
       return '<article class="ddb-vehicle' + (isSel ? " is-selected" : "") + (tooSmall ? " is-disabled" : "") + '" data-id="' + v.id + '">' +
         '<div class="ddb-vehicle-media' + (v.image_url ? " has-photo" : "") + '">' + media + "</div>" +
         '<div class="ddb-vehicle-body">' +
+        '<button type="button" class="ddb-vehicle-select"' + (tooSmall ? " disabled" : "") + ">" +
+        (tooSmall ? T("bk.v.tooSmall") : isSel ? icon("check") + T("bk.v.selected") + " · " + price(v.price) : T("bk.v.select", { price: money(v.price) })) +
+        "</button>" +
+        '<div class="ddb-vehicle-info">' +
         "<h4>" + v.name + "</h4>" +
         (v.category ? '<p class="ddb-vehicle-cat">' + v.category + "</p>" : "") +
         '<ul class="ddb-vehicle-specs">' +
         (v.seats ? "<li>" + icon("users") + T("bk.v.seats", { n: v.seats }) + "</li>" : "") +
         (v.luggage ? "<li>" + icon("briefcase") + T("bk.v.luggage", { n: v.luggage }) + "</li>" : "") +
-        "</ul>" +
-        '<button type="button" class="ddb-vehicle-select"' + (tooSmall ? " disabled" : "") + ">" +
-        (tooSmall ? T("bk.v.tooSmall") : isSel ? icon("check") + T("bk.v.selected") + " · " + price(v.price) : T("bk.v.select", { price: money(v.price) })) +
-        "</button></div></article>";
+        "</ul></div></div></article>";
     }).join("");
     el.list.querySelectorAll(".ddb-vehicle").forEach(function (card) {
       var btn = card.querySelector(".ddb-vehicle-select");
