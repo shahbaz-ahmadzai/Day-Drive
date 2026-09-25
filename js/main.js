@@ -138,6 +138,56 @@
     spy();
   }
 
+  /* ---------- Pop-up windows (Services + Fleet) ---------- */
+  var lastTrigger = null;
+  document.querySelectorAll("dialog.svc-modal").forEach(function (dlg) {
+    if (typeof dlg.showModal !== "function") return;
+    dlg.addEventListener("close", function () {
+      document.body.classList.remove("modal-open");
+      if (lastTrigger) lastTrigger.focus();
+    });
+    dlg.querySelector("[data-close]").addEventListener("click", function () { dlg.close(); });
+    // a click on the dark area outside the window closes it
+    dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+  });
+
+  function openModal(dlg, trigger, scrollTarget) {
+    if (!dlg || typeof dlg.showModal !== "function") return false;
+    lastTrigger = trigger || null;
+    dlg.showModal();
+    document.body.classList.add("modal-open");
+    var body = dlg.querySelector(".svc-modal-body");
+    body.scrollTop = 0;
+    if (scrollTarget) {
+      requestAnimationFrame(function () {
+        var top = scrollTarget.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 12;
+        body.scrollTo({ top: top, behavior: "instant" });
+      });
+    }
+    return true;
+  }
+
+  // Services: open the list at the service that was clicked and highlight it
+  var svcModal = document.getElementById("services-modal");
+  document.querySelectorAll("[data-service]").forEach(function (el) {
+    el.addEventListener("click", function (e) {
+      var key = el.getAttribute("data-service");
+      if (!svcModal) return;
+      svcModal.querySelectorAll(".svc-item").forEach(function (li) {
+        li.classList.toggle("is-highlighted", li.getAttribute("data-svc") === key);
+      });
+      var target = key !== "vip" ? document.getElementById("svc-" + key) : null;
+      if (openModal(svcModal, el, target)) e.preventDefault();
+    });
+  });
+
+  // Any button with data-modal-open="id" opens that window (e.g. "View Fleet")
+  document.querySelectorAll("[data-modal-open]").forEach(function (el) {
+    el.addEventListener("click", function (e) {
+      if (openModal(document.getElementById(el.getAttribute("data-modal-open")), el)) e.preventDefault();
+    });
+  });
+
   /* ---------- Fleet slider ---------- */
   var slider = document.querySelector("[data-slider]");
   if (slider) {
