@@ -12,8 +12,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Barlow:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202609251141">
-  <link rel="stylesheet" href="css/dd-booking.css?v=202609251141">
+  <link rel="stylesheet" href="css/style.css?v=202609252300">
+  <link rel="stylesheet" href="css/dd-booking.css?v=202609252300">
 </head>
 <body data-page="booking" data-title-key="meta.title.booking" class="ddb-body">
 
@@ -101,7 +101,7 @@
   <dialog class="ddb-modal" id="ddbVehicleModal" aria-labelledby="ddbVTitle">
     <div class="ddb-modal-head">
       <div>
-        <p class="eyebrow" data-i18n="bk.v.kicker"></p>
+        <p class="eyebrow" id="ddbVKicker" data-i18n="bk.v.kicker"></p>
         <h2 id="ddbVTitle" data-i18n="bk.v.title"></h2>
         <p data-i18n="bk.v.lead"></p>
       </div>
@@ -137,7 +137,7 @@
 
       <form class="ddb-card" id="ddbCustomerForm" novalidate>
         <h3 data-i18n="bk.c.title"></h3>
-        <p class="ddb-card-lead" data-i18n="bk.c.lead"></p>
+        <p class="ddb-card-lead" data-i18n="bk.c.leadSms"></p>
 
         <div class="ddb-form-grid">
           <div class="ddb-f ddb-f-full">
@@ -201,6 +201,7 @@
           <div><span data-i18n="bk.c.selectedVehicle"></span><strong id="ddbSelectedName">—</strong></div>
           <div><span data-i18n="bk.c.total"></span><strong class="ddb-selected-price" id="ddbSelectedPrice">—</strong></div>
         </div>
+        <p class="ddb-pay-note" id="ddbPayNote" hidden><span data-icon="wallet"></span><span data-i18n="bk.c.payOnRide"></span></p>
 
         <label class="ddb-terms">
           <input type="checkbox" id="ddbTerms">
@@ -245,17 +246,44 @@
     </div>
   </dialog>
 
+  <!-- ============ DONE: BOOKING CONFIRMED ============ -->
+  <dialog class="ddb-modal ddb-pay-modal ddb-done-modal" id="ddbDoneModal" aria-labelledby="ddbDTitle">
+    <div class="ddb-modal-head">
+      <div>
+        <p class="eyebrow ddb-done-kicker"><span data-icon="check"></span><span data-i18n="bk.d.kicker"></span></p>
+        <h2 id="ddbDTitle">—</h2>
+        <p id="ddbDoneLead">—</p>
+      </div>
+      <button type="button" class="svc-close" data-ddb-close data-i18n-attr="aria-label:modal.close"><span data-icon="close"></span></button>
+    </div>
+    <div class="ddb-modal-body">
+      <dl class="ddb-pay-summary">
+        <div><dt data-i18n="bk.p.ref"></dt><dd id="ddbDoneRef">—</dd></div>
+        <div><dt data-i18n="bk.d.when"></dt><dd id="ddbDoneWhen">—</dd></div>
+        <div><dt data-i18n="bk.p.vehicle"></dt><dd id="ddbDoneVehicle">—</dd></div>
+        <div class="ddb-done-route"><dt data-i18n="bk.d.route"></dt><dd id="ddbDoneRoute">—</dd></div>
+        <div class="is-total"><dt data-i18n="bk.d.total"></dt><dd id="ddbDoneAmount">—</dd></div>
+      </dl>
+      <p class="ddb-done-pay"><span data-icon="wallet"></span><span data-i18n="bk.d.payment"></span></p>
+      <p class="ddb-done-help"><span data-i18n="bk.d.help"></span> <a href="tel:+4917643241205">0176 432 412 05</a></p>
+      <div class="ddb-done-actions">
+        <a class="btn btn-outline" href="index.html" data-i18n="bk.d.home"></a>
+        <button type="button" class="btn btn-gold" id="ddbDoneAgain" data-i18n="bk.d.again"></button>
+      </div>
+    </div>
+  </dialog>
+
   <div class="ddb-overlay" id="ddbOverlay" hidden>
     <div class="ddb-overlay-card"><span class="ddb-spinner"></span><p data-i18n="bk.overlay"></p></div>
   </div>
 
   <div id="site-footer"></div>
 
-  <script src="js/translations.js?v=202609251141"></script>
-  <script src="js/layout.js?v=202609251141"></script>
-  <script src="js/main.js?v=202609251141"></script>
-  <script src="js/dd-booking-api.js?v=202609251141"></script>
-  <script src="js/dd-booking-map.js?v=202609251141"></script>
-  <script src="js/dd-booking-checkout.js?v=202609251141"></script>
+  <script src="js/translations.js?v=202609252300"></script>
+  <script src="js/layout.js?v=202609252300"></script>
+  <script src="js/main.js?v=202609252300"></script>
+  <script src="js/dd-booking-api.js?v=202609252300"></script>
+  <script src="js/dd-booking-map.js?v=202609252300"></script>
+  <script src="js/dd-booking-checkout.js?v=202609252300"></script>
 </body>
 </html>
