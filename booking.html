@@ -5,39 +5,263 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0e1116">
   <meta name="format-detection" content="telephone=no">
-  <title>Day Drive Service</title>
-  <meta name="description" content="Premium chauffeur service in Frankfurt.">
+  <title>Book a Ride | Day Drive Service</title>
+  <meta name="description" content="Book your chauffeur in Frankfurt: choose pickup, destination and stops, pick a vehicle and pay online.">
   <link rel="icon" href="assets/images/logo-light.png">
   <link rel="apple-touch-icon" href="assets/images/logo-light.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Barlow:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=202609251123">
+  <link rel="stylesheet" href="css/dd-booking.css?v=202609251123">
 </head>
-<body data-page="booking" data-title-key="meta.title.booking">
+<body data-page="booking" data-title-key="meta.title.booking" class="ddb-body">
 
   <div id="site-header"></div>
 
-  <main>
-    <!-- Placeholder – the full booking page will be built here later -->
-    <section class="page-hero">
-      <div class="container">
-        <p class="eyebrow eyebrow-lg" data-i18n="page.comingSoon"></p>
-        <h1 data-i18n="page.booking.title"></h1>
-        <p data-i18n="page.booking.text"></p>
-        <div class="page-contact">
-          <a class="btn btn-gold btn-lg" href="tel:+4917643241205"><span data-icon="phone"></span>0176 43241205</a>
-          <a class="btn btn-outline btn-lg" href="mailto:info.daydriveservice@gmail.com"><span data-icon="mail"></span>E-Mail</a>
+  <main class="ddb-page">
+    <p class="ddb-demo-banner" id="ddbDemoBanner" hidden><span data-icon="gem"></span><span data-i18n="bk.demo"></span></p>
+
+    <!-- ============ STEP 1: ROUTE ============ -->
+    <section class="ddb-route" aria-labelledby="ddbTitle">
+
+      <form class="ddb-panel" id="ddbRouteForm" autocomplete="off" novalidate>
+        <p class="eyebrow" data-i18n="bk.kicker"></p>
+        <h1 id="ddbTitle" data-i18n="bk.title"></h1>
+
+        <div class="ddb-points">
+          <div class="ddb-field">
+            <label for="ddbPickup" data-i18n="bk.pickup"></label>
+            <div class="ddb-input">
+              <span class="ddb-dot is-pickup">A</span>
+              <input type="text" id="ddbPickup" data-i18n-attr="placeholder:bk.pickup.ph" role="combobox" aria-expanded="false" aria-controls="ddbPickupList">
+              <button type="button" class="ddb-clear" id="ddbPickupClear" data-i18n-attr="aria-label:bk.clear">×</button>
+            </div>
+            <div class="ddb-suggest" id="ddbPickupList" role="listbox"></div>
+            <small class="ddb-help" id="ddbPickupHelp" data-i18n="bk.pickup.help"></small>
+          </div>
+
+          <div class="ddb-stops" id="ddbStops"></div>
+          <button type="button" class="ddb-add-stop" id="ddbAddStop" hidden><span data-icon="plus"></span><span data-i18n="bk.stop.add"></span></button>
+
+          <div class="ddb-field">
+            <label for="ddbDestination" data-i18n="bk.destination"></label>
+            <div class="ddb-input">
+              <span class="ddb-dot is-destination">B</span>
+              <input type="text" id="ddbDestination" data-i18n-attr="placeholder:bk.destination.ph" role="combobox" aria-expanded="false" aria-controls="ddbDestinationList">
+              <button type="button" class="ddb-clear" id="ddbDestinationClear" data-i18n-attr="aria-label:bk.clear">×</button>
+            </div>
+            <div class="ddb-suggest" id="ddbDestinationList" role="listbox"></div>
+          </div>
+          <small class="ddb-stop-summary" id="ddbStopSummary" hidden></small>
         </div>
-        <a class="btn btn-outline btn-lg" href="index.html" data-i18n="btn.backHome"></a>
+
+        <div class="ddb-grid-2">
+          <div class="ddb-field">
+            <label for="ddbDate" data-i18n="bk.date"></label>
+            <div class="ddb-input ddb-input-plain"><input type="date" id="ddbDate" required></div>
+          </div>
+          <div class="ddb-field">
+            <label for="ddbTime" data-i18n="bk.time"></label>
+            <div class="ddb-input ddb-input-plain"><input type="time" id="ddbTime" step="300" required></div>
+          </div>
+        </div>
+
+        <div class="ddb-modes" role="group">
+          <button type="button" class="ddb-mode is-active" id="ddbModePickup" aria-pressed="true"><span data-icon="pin"></span><span data-i18n="bk.mode.pickup"></span></button>
+          <button type="button" class="ddb-mode" id="ddbModeDestination" aria-pressed="false"><span data-icon="pin"></span><span data-i18n="bk.mode.destination"></span></button>
+        </div>
+
+        <div class="ddb-result">
+          <div><span data-i18n="bk.distance"></span><strong id="ddbDistance">—</strong></div>
+          <div><span data-i18n="bk.duration"></span><strong id="ddbDuration">—</strong></div>
+        </div>
+
+        <p class="ddb-route-message" id="ddbRouteMessage" role="status" aria-live="polite"></p>
+        <button type="submit" class="btn btn-gold btn-lg ddb-book" id="ddbBookNow" disabled><span data-i18n="bk.bookNow"></span><span data-icon="arrow"></span></button>
+      </form>
+
+      <div class="ddb-map-wrap">
+        <div class="ddb-map" id="ddbMap" aria-label="Map"></div>
+        <p class="ddb-map-tip" id="ddbMapTip"></p>
+
+        <aside class="ddb-area-alert" id="ddbAreaAlert" role="alertdialog" aria-labelledby="ddbAreaTitle" hidden>
+          <span class="ddb-area-icon">!</span>
+          <button type="button" class="ddb-area-close" data-close-alert data-i18n-attr="aria-label:modal.close">×</button>
+          <h3 id="ddbAreaTitle" data-i18n="bk.area.title"></h3>
+          <p data-i18n="bk.area.text"></p>
+          <div class="ddb-area-actions">
+            <button type="button" class="btn btn-gold" data-close-alert data-i18n="bk.area.ok"></button>
+            <a class="btn btn-outline-gold" href="tel:+4917643241205"><span data-icon="phone"></span><span data-i18n="btn.call"></span></a>
+          </div>
+        </aside>
       </div>
     </section>
   </main>
 
+  <!-- ============ STEP 2: VEHICLE + CUSTOMER DETAILS ============ -->
+  <dialog class="ddb-modal" id="ddbVehicleModal" aria-labelledby="ddbVTitle">
+    <div class="ddb-modal-head">
+      <div>
+        <p class="eyebrow" data-i18n="bk.v.kicker"></p>
+        <h2 id="ddbVTitle" data-i18n="bk.v.title"></h2>
+        <p data-i18n="bk.v.lead"></p>
+      </div>
+      <button type="button" class="svc-close" data-ddb-close data-i18n-attr="aria-label:modal.close"><span data-icon="close"></span></button>
+    </div>
+
+    <div class="ddb-modal-body">
+      <section class="ddb-card">
+        <h3 data-i18n="bk.v.trip"></h3>
+        <dl class="ddb-summary">
+          <div class="is-wide"><dt><span class="ddb-dot is-pickup">A</span><span data-i18n="bk.pickup"></span></dt><dd id="ddbSumPickup">—</dd></div>
+          <div class="is-wide"><dt><span class="ddb-dot is-destination">B</span><span data-i18n="bk.destination"></span></dt><dd id="ddbSumDestination">—</dd></div>
+          <div class="is-full"><dt data-i18n="bk.v.stops"></dt><dd id="ddbSumStops">—</dd></div>
+          <div><dt data-i18n="bk.date"></dt><dd id="ddbSumDate">—</dd></div>
+          <div><dt data-i18n="bk.time"></dt><dd id="ddbSumTime">—</dd></div>
+          <div><dt data-i18n="bk.distance"></dt><dd id="ddbSumDistance">—</dd></div>
+          <div><dt data-i18n="bk.duration"></dt><dd id="ddbSumDuration">—</dd></div>
+        </dl>
+      </section>
+
+      <section class="ddb-card">
+        <div class="ddb-card-head">
+          <div>
+            <h3 data-i18n="bk.v.vehicles"></h3>
+            <p data-i18n="bk.v.vehiclesLead"></p>
+          </div>
+          <span class="ddb-count" id="ddbVehicleCount"></span>
+        </div>
+        <div class="ddb-state" id="ddbVehicleLoading" hidden><span class="ddb-spinner"></span><span data-i18n="bk.v.checking"></span></div>
+        <div class="ddb-state" id="ddbVehicleEmpty" hidden><h4 data-i18n="bk.v.none.title"></h4><p data-i18n="bk.v.none.text"></p></div>
+        <div class="ddb-vehicles" id="ddbVehicleList"></div>
+      </section>
+
+      <form class="ddb-card" id="ddbCustomerForm" novalidate>
+        <h3 data-i18n="bk.c.title"></h3>
+        <p class="ddb-card-lead" data-i18n="bk.c.lead"></p>
+
+        <div class="ddb-form-grid">
+          <div class="ddb-f ddb-f-full">
+            <label for="ddbService" data-i18n="bk.c.service"></label>
+            <select id="ddbService">
+              <option value="airport_transfer" data-i18n="bk.svc.airport"></option>
+              <option value="vip_executive" data-i18n="bk.svc.vip"></option>
+              <option value="business_travel" data-i18n="bk.svc.business"></option>
+              <option value="wedding_events" data-i18n="bk.svc.wedding"></option>
+              <option value="family_group" data-i18n="bk.svc.family"></option>
+              <option value="school_children" data-i18n="bk.svc.school"></option>
+              <option value="long_term_monthly" data-i18n="bk.svc.longterm"></option>
+              <option value="hourly" data-i18n="bk.svc.hourly"></option>
+              <option value="other" data-i18n="bk.svc.other"></option>
+            </select>
+          </div>
+          <div class="ddb-f">
+            <label for="ddbFirstName" data-i18n="bk.c.first"></label>
+            <input type="text" id="ddbFirstName" autocomplete="given-name" required>
+            <small class="ddb-err" id="ddbErrFirst"></small>
+          </div>
+          <div class="ddb-f">
+            <label for="ddbLastName" data-i18n="bk.c.last"></label>
+            <input type="text" id="ddbLastName" autocomplete="family-name" required>
+            <small class="ddb-err" id="ddbErrLast"></small>
+          </div>
+          <div class="ddb-f">
+            <label for="ddbEmail" data-i18n="bk.c.email"></label>
+            <input type="email" id="ddbEmail" autocomplete="email" inputmode="email" required>
+            <small class="ddb-err" id="ddbErrEmail"></small>
+          </div>
+          <div class="ddb-f">
+            <label for="ddbPhone" data-i18n="bk.c.phone"></label>
+            <input type="tel" id="ddbPhone" autocomplete="tel" inputmode="tel" placeholder="+49 …" required>
+            <small class="ddb-err" id="ddbErrPhone"></small>
+          </div>
+          <div class="ddb-f">
+            <label for="ddbPassengers" data-i18n="bk.c.passengers"></label>
+            <select id="ddbPassengers">
+              <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+            </select>
+          </div>
+          <div class="ddb-f">
+            <label for="ddbLuggage" data-i18n="bk.c.luggage"></label>
+            <select id="ddbLuggage">
+              <option>0</option><option selected>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+            </select>
+          </div>
+          <div class="ddb-f ddb-f-full">
+            <label for="ddbFlight"><span data-i18n="bk.c.flight"></span> <span class="ddb-optional" data-i18n="bk.c.optional"></span></label>
+            <input type="text" id="ddbFlight" placeholder="LH 400" autocapitalize="characters">
+            <small class="ddb-hint" data-i18n="bk.c.flight.help"></small>
+          </div>
+          <div class="ddb-f ddb-f-full">
+            <label for="ddbNotes"><span data-i18n="bk.c.notes"></span> <span class="ddb-optional" data-i18n="bk.c.optional"></span></label>
+            <textarea id="ddbNotes" rows="3" data-i18n-attr="placeholder:bk.c.notes.ph"></textarea>
+          </div>
+        </div>
+
+        <div class="ddb-selected" id="ddbSelected" hidden>
+          <div><span data-i18n="bk.c.selectedVehicle"></span><strong id="ddbSelectedName">—</strong></div>
+          <div><span data-i18n="bk.c.total"></span><strong class="ddb-selected-price" id="ddbSelectedPrice">—</strong></div>
+        </div>
+
+        <label class="ddb-terms">
+          <input type="checkbox" id="ddbTerms">
+          <span data-i18n="bk.c.terms"></span>
+        </label>
+
+        <p class="ddb-form-message" id="ddbFormMessage" role="alert"></p>
+        <button type="submit" class="btn btn-gold btn-lg ddb-continue" id="ddbContinue" disabled></button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ============ STEP 3: PAYMENT ============ -->
+  <dialog class="ddb-modal ddb-pay-modal" id="ddbPaymentModal" aria-labelledby="ddbPTitle">
+    <div class="ddb-modal-head">
+      <div>
+        <p class="eyebrow" data-i18n="bk.p.kicker"></p>
+        <h2 id="ddbPTitle" data-i18n="bk.p.title"></h2>
+        <p data-i18n="bk.p.lead"></p>
+      </div>
+      <button type="button" class="svc-close" data-ddb-close data-i18n-attr="aria-label:modal.close"><span data-icon="close"></span></button>
+    </div>
+    <div class="ddb-modal-body">
+      <dl class="ddb-pay-summary">
+        <div><dt data-i18n="bk.p.vehicle"></dt><dd id="ddbPayVehicle">—</dd></div>
+        <div><dt data-i18n="bk.p.ref"></dt><dd id="ddbPayRef">—</dd></div>
+        <div><dt data-i18n="bk.p.reserved"></dt><dd class="ddb-countdown" id="ddbPayCountdown">15:00</dd></div>
+        <div class="is-total"><dt data-i18n="bk.p.amount"></dt><dd id="ddbPayAmount">—</dd></div>
+      </dl>
+
+      <div class="ddb-pay-methods">
+        <button type="button" class="ddb-pay-btn is-paypal" id="ddbPayPayPal"><span class="ddb-pay-logo">Pay<b>Pal</b></span><span data-i18n="bk.p.paypal"></span></button>
+        <button type="button" class="ddb-pay-btn is-apple" id="ddbPayApple" hidden><span class="ddb-pay-logo"> Pay</span><span data-i18n="bk.p.apple"></span></button>
+        <button type="button" class="ddb-pay-btn is-card" id="ddbPayCard"><span data-icon="lock"></span><span data-i18n="bk.p.card"></span></button>
+        <!-- the real PayPal / card fields are placed here when the backend is connected -->
+        <div id="ddbPayPalContainer" hidden></div>
+        <div id="ddbCardFields" hidden></div>
+      </div>
+
+      <p class="ddb-pay-message" id="ddbPayMessage" role="status" aria-live="polite"></p>
+      <p class="ddb-pay-secure"><span data-icon="shield"></span><span data-i18n="bk.p.secure"></span></p>
+    </div>
+  </dialog>
+
+  <div class="ddb-overlay" id="ddbOverlay" hidden>
+    <div class="ddb-overlay-card"><span class="ddb-spinner"></span><p data-i18n="bk.overlay"></p></div>
+  </div>
+
   <div id="site-footer"></div>
 
-  <script src="js/translations.js"></script>
-  <script src="js/layout.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/translations.js?v=202609251123"></script>
+  <script src="js/layout.js?v=202609251123"></script>
+  <script src="js/main.js?v=202609251123"></script>
+  <script src="js/dd-booking-api.js?v=202609251123"></script>
+  <script src="js/dd-booking-map.js?v=202609251123"></script>
+  <script src="js/dd-booking-checkout.js?v=202609251123"></script>
+  <script>
+    // show the demo notice while the booking runs on sample data
+    if (window.DDBookingAPI && window.DDBookingAPI.config.DEMO_MODE) document.getElementById("ddbDemoBanner").hidden = false;
+  </script>
 </body>
 </html>
