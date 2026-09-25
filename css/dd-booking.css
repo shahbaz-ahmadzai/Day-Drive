@@ -266,14 +266,18 @@
 .ddb-vehicle.is-selected { border-color: var(--gold-strong); box-shadow: 0 0 0 3px rgba(217, 174, 95, .3); }
 .ddb-vehicle.is-disabled { opacity: .55; }
 .ddb-vehicle.is-disabled:hover { border-color: #e3e5e9; box-shadow: none; }
-.ddb-vehicle-media { height: 132px; display: grid; place-items: center; background: linear-gradient(135deg, #f1f2f4, #e6e8eb); color: var(--gold-strong); }
-.ddb-vehicle-media.has-photo { background: linear-gradient(180deg, #fff, #eef0f2); padding: 8px 14px 0; }
-.ddb-vehicle-media img { width: 100%; height: 100%; object-fit: contain; }
+.ddb-vehicle-media { position: relative; height: 170px; overflow: hidden; display: grid; place-items: center; background: linear-gradient(135deg, #f1f2f4, #e6e8eb); color: var(--gold-strong); }
+.ddb-vehicle-media.has-photo { background: #e9ebee; padding: 0; }
+.ddb-vehicle-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; }
 .ddb-vehicle-icon { width: 60px; height: 60px; stroke-width: 1.2; }
 .ddb-vehicle-body { display: flex; flex-direction: column; flex: 1; padding: 14px 16px 16px; }
 .ddb-vehicle-body h4 { font-family: var(--serif); font-weight: 700; font-size: 22px; line-height: 1.15; }
 .ddb-vehicle-cat { margin-top: 2px; font-size: 12.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-strong); }
-.ddb-vehicle-specs { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0 14px; }
+.ddb-vehicle-specs { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0 0; }
+.ddb-vehicle-info { margin-top: 14px; }
+.ddb-vehicle-body .ddb-vehicle-select { margin-top: 0; }
+.ddb-vehicle-info h4 { margin: 0; }
+.ddb-vehicle-info .ddb-vehicle-cat { margin: 4px 0 0; }
 .ddb-vehicle-specs li { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #3a3c41; }
 .ddb-vehicle-specs .icon { width: 17px; height: 17px; color: var(--gold-strong); }
 .ddb-vehicle-select {
@@ -398,11 +402,12 @@
   .ddb-vehicles { display: flex; flex-direction: column; }
   .ddb-vehicle { flex-direction: row; }
   .ddb-vehicle-media { width: 118px; height: auto; flex: none; }
-  .ddb-vehicle-media.has-photo { padding: 6px; }
+  .ddb-vehicle-media.has-photo { padding: 0; min-height: 120px; }
   .ddb-vehicle-icon { width: 44px; height: 44px; }
   .ddb-vehicle-body { padding: 12px 12px 12px 14px; }
   .ddb-vehicle-body h4 { font-size: 20px; }
-  .ddb-vehicle-specs { margin: 6px 0 10px; }
+  .ddb-vehicle-specs { margin: 6px 0 0; }
+  .ddb-vehicle-info { margin-top: 10px; }
   .ddb-vehicle-specs li { font-size: 13.5px; }
   .ddb-vehicle-select { min-height: 42px; font-size: 15px; }
   .ddb-form-grid { grid-template-columns: 1fr 1fr; gap: 10px 12px; }
