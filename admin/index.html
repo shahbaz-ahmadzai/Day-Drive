@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0e1116">
+  <title>Sign in · Day Drive Admin</title>
+  <link rel="icon" href="../assets/images/logo-light.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css?v=202609252300">
+</head>
+<body class="login-page">
+  <main class="login">
+    <section class="login-art" aria-hidden="true">
+      <div class="login-art-inner">
+        <img src="../assets/images/logo-light.svg" alt="" width="200">
+        <p class="login-quote">Premium chauffeur service<br>Frankfurt am Main</p>
+      </div>
+    </section>
+
+    <section class="login-panel">
+      <form id="loginForm" class="login-card" novalidate>
+        <img class="login-logo-sm" src="../assets/images/logo-light.svg" alt="Day Drive Service" width="120">
+        <h1>Admin sign in</h1>
+        <p class="muted">Manage bookings, fleet, drivers and finance.</p>
+
+        <label class="field">
+          <span class="field-label">Username or e-mail</span>
+          <input class="input" id="login" name="login" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        </label>
+        <label class="field">
+          <span class="field-label">Password</span>
+          <span class="input-with-btn">
+            <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
+            <button type="button" class="btn btn-ghost btn-sm" id="togglePw" aria-label="Show password">Show</button>
+          </span>
+        </label>
+
+        <p class="form-msg" id="msg" role="alert" hidden></p>
+        <button class="btn btn-primary btn-block" id="submit" type="submit"><span>Sign in</span></button>
+        <a class="login-back" href="../index.html">← Back to the website</a>
+      </form>
+    </section>
+  </main>
+
+  <script type="module">
+    import { signIn } from "./js/core/auth.js";
+    import { sb } from "./js/core/supabase.js";
+
+    const f = document.getElementById("loginForm"), msg = document.getElementById("msg"), btn = document.getElementById("submit");
+    const show = (t) => { msg.textContent = t; msg.hidden = !t; };
+
+    if (new URLSearchParams(location.search).has("denied")) show("This login has no access to the admin panel.");
+    sb.auth.getSession().then(({ data }) => { if (data.session && !location.search.includes("denied")) location.replace("app.html"); });
+
+    document.getElementById("togglePw").addEventListener("click", (e) => {
+      const p = document.getElementById("password"); const vis = p.type === "password";
+      p.type = vis ? "text" : "password"; e.currentTarget.textContent = vis ? "Hide" : "Show";
+    });
+
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault(); show("");
+      const login = f.login.value.trim(), password = f.password.value;
+      if (!login || !password) { show("Please enter your username and password."); return; }
+      btn.disabled = true; btn.classList.add("is-busy");
+      try { await signIn(login, password); location.replace("app.html"); }
+      catch (err) { show(err.message || "Sign-in failed."); btn.disabled = false; btn.classList.remove("is-busy"); }
+    });
+  </script>
+</body>
+</html>

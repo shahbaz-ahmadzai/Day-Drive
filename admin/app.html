@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0e1116">
+  <title>Day Drive Admin</title>
+  <link rel="icon" href="../assets/images/logo-light.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css?v=202609252300">
+</head>
+<body class="booting">
+  <div class="shell">
+    <aside class="sidebar" aria-label="Main menu">
+      <a class="brand" href="#/dashboard">
+        <img src="../assets/images/logo-light.svg" alt="Day Drive Service" width="58" height="45">
+        <span><strong>Day Drive</strong><small>Admin</small></span>
+      </a>
+      <nav id="nav" class="nav"></nav>
+      <div id="userBox"></div>
+    </aside>
+    <div id="navBackdrop" class="nav-backdrop"></div>
+
+    <div class="main">
+      <header class="topbar">
+        <button id="navToggle" class="btn btn-icon btn-ghost nav-toggle" type="button" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+        <h1 id="topTitle" class="top-title">Dashboard</h1>
+        <div class="top-actions">
+          <button id="quickBooking" class="btn btn-primary btn-sm" type="button">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>New booking</span>
+          </button>
+        </div>
+      </header>
+      <main id="view" class="view" tabindex="-1"></main>
+    </div>
+  </div>
+  <div class="boot-screen"><span class="spin"></span></div>
+
+  <script type="module" src="js/app.js?v=202609252300"></script>
+</body>
+</html>
