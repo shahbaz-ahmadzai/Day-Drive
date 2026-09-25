@@ -428,6 +428,7 @@
     if (!b.isEmpty()) S.map.fitBounds(b, window.innerWidth > 980 ? { top: 70, right: 60, bottom: 60, left: 60 } : 40);
   }
   function updateResult() {
+    updateStopSummary();
     var has = S.distanceKm != null;
     el.distance.textContent = has ? S.distanceKm.toLocaleString(window.DD_LANG === "de" ? "de-DE" : "en-GB", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " km" + (S.routeSource === "estimate" ? " (" + T("bk.estimated") + ")" : "") : "—";
     el.duration.textContent = has ? formatDuration(S.drivingMin + totalWait()) : "—";
