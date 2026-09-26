@@ -171,6 +171,7 @@
     el.selPrice.textContent = price(v.price);
     updateContinue();
     formMessage("");
+    document.dispatchEvent(new CustomEvent("dd:vehicle", { detail: { price: v.price } }));
   }
   function resetSelection() {
     S.selected = null;
@@ -216,6 +217,7 @@
       },
       serviceType: el.service.value,
       termsAccepted: el.terms.checked,
+      paymentMethod: window.DDBalance && window.DDBalance.use ? "balance" : null,
       language: window.DD_LANG || "en",
       source: "website"
     };
@@ -231,7 +233,8 @@
     try {
       // the server checks again that the vehicle is still free and calculates the final price
       var payload = buildBookingPayload();
-      var res = await API.createBooking(payload);
+      var userToken = payload.paymentMethod === "balance" && window.DDBalance ? await window.DDBalance.token() : null;
+      var res = await API.createBooking(payload, userToken);
       S.booking = Object.assign({}, res, { vehicleName: S.selected.name, customer: payload.customer, trip: S.trip });
       try { sessionStorage.setItem("ddBooking", JSON.stringify({ reference: res.bookingReference, bookingId: res.bookingId })); } catch (err) {}
       el.overlay.hidden = true;
@@ -315,6 +318,9 @@
     el.dVehicle.textContent = b.vehicleName || "—";
     el.dRoute.textContent = (t.pickup ? t.pickup.address : "") + " → " + (t.destination ? t.destination.address : "");
     el.dAmount.textContent = price(b.amount);
+    var payText = $("ddbDonePayText"), rideBtn = $("ddbDoneRide");
+    if (payText) { var k = b.paidFromBalance ? "bk.d.paidBalance" : "bk.d.payment"; payText.setAttribute("data-i18n", k); payText.textContent = T(k); }
+    if (rideBtn) { rideBtn.hidden = !b.rideLink; if (b.rideLink) rideBtn.href = b.rideLink; }
   }
   function openDone() {
     fillDone();

@@ -39,6 +39,8 @@
     calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 15 2 2 4-4"/>',
     heart: '<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/>',
     close: '<path d="M18 6 6 18M6 6l12 12"/>',
+    bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/>',
     wallet: '<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>'
   };
   var sprite = '<svg xmlns="http://www.w3.org/2000/svg" style="display:none">';
@@ -68,7 +70,9 @@
     navLink("nav.fleet", home + "#fleet", "fleet") +
     navLink("nav.about", "about.html", "about") +
     navLink("nav.prices", "prices.html", "prices") +
+    navLink("nav.monthly", "monthly.html", "monthly") +
     navLink("nav.contact", home + "#contact", "contact") +
+    '<li class="nav-account-mobile"><a class="nav-link" href="account.html" data-nav="account">' + icon("user", "icon-sm") + ' <span data-i18n="nav.account"></span></a></li>' +
     "</ul>" +
     '<a class="btn btn-gold nav-book-mobile" href="booking.html" data-i18n="btn.bookRide"></a>' +
     "</nav>" +
@@ -80,6 +84,7 @@
     '<li><button type="button" role="option" data-lang="en"><span>EN</span> English</button></li>' +
     '<li><button type="button" role="option" data-lang="de"><span>DE</span> Deutsch</button></li>' +
     "</ul></div>" +
+    '<a class="header-account" href="account.html" data-i18n-attr="aria-label:nav.account;title:nav.account">' + icon("user") + "</a>" +
     '<a class="btn btn-gold header-book" href="booking.html" data-i18n="btn.bookRide"></a>' +
     '<button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" data-i18n-attr="aria-label:nav.menu">' +
     icon("menu", "icon-open") + icon("close", "icon-close") + "</button>" +
@@ -111,6 +116,8 @@
     '<li><a href="' + home + '#fleet" data-i18n="nav.fleet"></a></li>' +
     '<li><a href="about.html" data-i18n="nav.about"></a></li>' +
     '<li><a href="prices.html" data-i18n="nav.prices"></a></li>' +
+    '<li><a href="monthly.html" data-i18n="nav.monthly"></a></li>' +
+    '<li><a href="account.html" data-i18n="nav.account"></a></li>' +
     '<li><a href="' + home + '#contact" data-i18n="nav.contact"></a></li>' +
     "</ul></div>" +
     '<div class="footer-col"><h3 data-i18n="footer.follow"></h3><div class="social social-lg">' +
@@ -122,7 +129,7 @@
     "</div>" +
     '<div class="footer-bottom"><div class="container footer-bottom-inner">' +
     '<p data-i18n="footer.rights"></p>' +
-    '<ul><li><a href="#" data-i18n="footer.imprint"></a></li><li><a href="#" data-i18n="footer.privacy"></a></li><li><a href="#" data-i18n="footer.terms"></a></li></ul>' +
+    '<ul><li><a href="#" data-i18n="footer.imprint"></a></li><li><a href="#" data-i18n="footer.privacy"></a></li><li><a href="#" data-i18n="footer.terms"></a></li><li><a href="admin/" rel="nofollow">' + icon("lock", "icon-sm") + ' Admin</a></li></ul>' +
     "</div></div></footer>";
 
   /* ---------- Phone-only bottom bar: call + book ---------- */
@@ -136,7 +143,7 @@
   var f = document.getElementById("site-footer");
   if (h) h.outerHTML = header;
   if (f) f.outerHTML = footer;
-  if (page !== "booking") document.body.insertAdjacentHTML("beforeend", mobileBar);
+  if (page !== "booking" && page !== "ride") document.body.insertAdjacentHTML("beforeend", mobileBar);
 
   // Fill any <span data-icon="name"></span> placeholders used inside the pages
   document.querySelectorAll("[data-icon]").forEach(function (el) {

@@ -41,12 +41,13 @@
   };
 
   /* one POST to the booking function; always resolves to the JSON or throws a readable Error */
-  async function call(action, body) {
+  async function call(action, body, userToken) {
     var res, data;
     try {
       res = await fetch(CONFIG.SUPABASE_URL + "/functions/v1/public-booking", {
         method: "POST",
-        headers: { "Content-Type": "application/json", apikey: CONFIG.SUPABASE_KEY, Authorization: "Bearer " + CONFIG.SUPABASE_KEY },
+        // userToken = login of a My Day Drive customer (only sent when paying from the balance)
+        headers: { "Content-Type": "application/json", apikey: CONFIG.SUPABASE_KEY, Authorization: "Bearer " + (userToken || CONFIG.SUPABASE_KEY) },
         body: JSON.stringify(Object.assign({ action: action }, body || {}))
       });
     } catch (e) {
@@ -99,10 +100,11 @@
     /**
      * 3) Save the booking. The server re-checks availability and uses ITS price.
      * returns { bookingId, bookingReference, clientToken, amount, currency, status, paymentStatus,
-     *           paymentMode, paymentExpiresAt, rideCode, bookingStart, smsQueued }
+     *           paymentMode, paymentExpiresAt, rideCode, bookingStart, smsQueued, paidFromBalance, rideLink }
+     * booking.paymentMethod "balance" needs the customer's login token (see dd-booking-balance.js)
      */
-    createBooking: async function (booking) {
-      return call("create", { booking: booking });
+    createBooking: async function (booking, userToken) {
+      return call("create", { booking: booking }, userToken);
     },
 
     /**
