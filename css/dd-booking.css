@@ -437,3 +437,14 @@
 @media (max-width: 640px) {
   .ddb-done-actions .btn { flex: 1 1 100%; justify-content: center; }
 }
+
+/* pay from the My Day Drive balance (logged-in customers) */
+.ddb-balance { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 6px; }
+.ddb-bal-title { font-weight: 600; font-size: 15px; }
+.ddb-bal-opt { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid rgba(128,128,128,.35); border-radius: var(--radius); cursor: pointer; }
+.ddb-bal-opt input { margin-top: 3px; accent-color: var(--gold); width: 18px; height: 18px; flex: none; }
+.ddb-bal-opt span { display: flex; flex-direction: column; gap: 2px; }
+.ddb-bal-opt small { font-size: 13px; color: inherit; opacity: .75; }
+.ddb-bal-opt.is-active { border-color: var(--gold); background: rgba(217,174,95,.16); }
+.ddb-bal-opt.is-disabled { opacity: .55; cursor: not-allowed; }
+.ddb-done-ride { width: 100%; margin: 4px 0 10px; }

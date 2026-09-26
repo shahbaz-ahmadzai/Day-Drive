@@ -981,3 +981,20 @@ body.modal-open { overflow: hidden; }
   .quote-text > p { font-size: 16.5px; }
   .quote-actions .btn { width: 100%; }
 }
+
+/* ---------- My Day Drive link in the header ---------- */
+.header-account {
+  width: 44px; height: 44px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); border-radius: 50%; color: #e9e9ea;
+  transition: background .2s, color .2s, border-color .2s;
+}
+.header-account:hover, body[data-page="account"] .header-account { background: var(--gold); border-color: var(--gold); color: #121212; }
+.header-account .icon { width: 21px; height: 21px; }
+.nav-account-mobile { display: none; }
+.nav-account-mobile .icon { vertical-align: -2px; }
+@media (max-width: 1320px) { .main-nav ul { gap: clamp(14px, 2vw, 30px); } }
+@media (max-width: 980px) {
+  .header-account { display: none; }
+  .nav-account-mobile { display: block; }
+}
