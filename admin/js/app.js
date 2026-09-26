@@ -13,6 +13,9 @@ export const PAGES = [
   { id: "bookings",  label: "Bookings",  icon: "calendar",  section: "Operations", load: () => import("./pages/bookings.js"), badge: "bookings" },
   { id: "vehicles",  label: "Vehicles",  icon: "car",       section: "Operations", load: () => import("./pages/vehicles.js") },
   { id: "drivers",   label: "Drivers",   icon: "users",     section: "Operations", load: () => import("./pages/drivers.js") },
+  { id: "contracts", label: "Monthly rides", icon: "route", section: "Operations", load: () => import("./pages/contracts.js"), badge: "contracts" },
+  { id: "customers", label: "Customers", icon: "user",      section: "Operations", load: () => import("./pages/customers.js") },
+  { id: "shifts",    label: "Shifts",    icon: "clock",     section: "Operations", load: () => import("./pages/shifts.js") },
   { id: "finance",   label: "Finance",   icon: "chart",     section: "Finance", load: () => import("./pages/finance.js"), perm: "finance.view" },
   { id: "expense",   label: "Add expense", icon: "receipt", section: "Finance", load: () => import("./pages/expense.js"), perm: "expenses.add" },
   { id: "profile",   label: "Profile",   icon: "user",      section: "Account", load: () => import("./pages/profile.js") },
@@ -89,6 +92,10 @@ export async function refreshBadges() {
     .in("status", ["confirmed"]).is("driver_id", null).gte("booking_start", new Date().toISOString());
   const b = document.querySelector('[data-badge="bookings"]');
   if (b) { b.hidden = !count; b.textContent = count > 99 ? "99+" : count || ""; b.title = `${count} booking(s) without a driver`; }
+  // monthly-ride requests waiting for an answer
+  const { count: open } = await sb.from("ride_contracts").select("id", { count: "exact", head: true }).in("status", ["request", "negotiating", "approved"]);
+  const c = document.querySelector('[data-badge="contracts"]');
+  if (c) { c.hidden = !open; c.textContent = open > 99 ? "99+" : open || ""; c.title = `${open} monthly-ride request(s) to answer`; }
 }
 
 function buildUser() {
@@ -114,8 +121,10 @@ function forcePasswordChange() {
       { name: "pw2", label: "Repeat new password", type: "password", required: true, span: 2,
         validate: (v, api) => (v !== api.inputs.pw1.input.value ? "The passwords don't match." : "") },
     ], {}, { cols: 1 });
-    const m = openModal({ title: "Choose your own password", subtitle: `Welcome, ${u.first_name || u.username}. For security, please replace the start password.`, body: f.el });
-    m.el.querySelector(".modal-head .btn-icon")?.remove();
+    const m = openModal({ title: "Choose your own password", locked: true,
+      subtitle: `Welcome, ${u.first_name || u.username}. This is your first sign-in – please replace the start password before you continue.`,
+      body: h("div", {}, f.el, h("p", { class: "note", style: { marginTop: "14px" } },
+        "Rules: at least 10 characters, letters and numbers, not your username, not “123456…”, “password” or “daydrive”. Example: Frankfurt2026Ride")) });
     const save = btn("Save password", { variant: "primary", onClick: () => {
       if (!f.validate()) return;
       busy(save, async () => {
@@ -137,8 +146,8 @@ async function start() {
   $("#navBackdrop").addEventListener("click", () => document.body.classList.remove("nav-open"));
   $("#quickBooking").addEventListener("click", () => go("bookings", { new: "1" }));
   if (!can("bookings.edit")) $("#quickBooking").hidden = true;
-  if (u.must_change_password) await forcePasswordChange();
   window.addEventListener("hashchange", render);
+  if (u.must_change_password) await forcePasswordChange();
   render();
   refreshBadges().catch(() => {});
   setInterval(() => refreshBadges().catch(() => {}), 60000);
