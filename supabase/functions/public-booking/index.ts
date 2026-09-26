@@ -5,6 +5,7 @@
 //   { action: "create",   booking }                        → saves the booking and reserves the vehicle
 //        payment mode "pay_on_ride" (live now): confirmed at once, paid to the driver, SMS confirmation sent
 //        payment mode "online" (after PayPal):  "pending_payment" hold until the payment is captured
+//        booking.paymentMethod "balance" + customer logged in (Authorization) → paid from the Day Drive balance
 //   { action: "cancel",   bookingId, clientToken, reason } → releases a pending (unpaid online) booking
 // The website never writes to the tables directly; everything is checked here.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -173,7 +174,16 @@ async function actionVehicles(body: any) {
   if (!areaFor(trip.pickup, areas)) throw new UserError("The pickup is outside our service area.");
   return { success: true, vehicles: await availableVehicles(trip, rules) };
 }
-async function actionCreate(body: any) {
+async function balanceCustomer(req: Request) {
+  const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!jwt || jwt.startsWith("sb_")) return null;          // publishable key = not logged in
+  const { data: u } = await db.auth.getUser(jwt);
+  if (!u?.user) return null;
+  const { data } = await db.rpc("customer_extra_balance", { p_user: u.user.id });
+  return data?.customer_id ? data : null;
+}
+
+async function actionCreate(body: any, req: Request) {
   const b = body.booking || {};
   const rules = await loadSettings();
   const trip = cleanTrip(b.trip, rules);
@@ -205,18 +215,33 @@ async function actionCreate(body: any) {
   if (!chosen) throw new UserError("This vehicle has just been booked. Please choose another one.");
   if (chosen.seats && passengers > chosen.seats) throw new UserError("This vehicle has not enough seats for your group.");
 
-  // customer record (one per e-mail)
-  const { data: customer, error: ce } = await db.from("customers")
-    .upsert({ email, first_name: firstName, last_name: lastName, phone, language: trip.language }, { onConflict: "email" })
-    .select("id").single();
-  if (ce) throw ce;
+  // pay from the Day Drive balance (logged-in contract customers only)
+  let useBalance = false, price = chosen.price, customerId: string | null = null;
+  if (b.paymentMethod === "balance") {
+    const bal = await balanceCustomer(req);
+    if (!bal) throw new UserError("Please log in to My Day Drive to pay from your balance.");
+    price = Math.round(chosen.price * (1 - Number(bal.discount_pct || 0) / 100) * 100) / 100;
+    if (Number(bal.available) < price) throw new UserError("Your balance is not enough for this ride. Please choose another payment method or top up.");
+    useBalance = true; customerId = bal.customer_id;
+  }
 
-  const online = rules.paymentMode === "online";
+  // customer record (one per e-mail) – only after all checks passed
+  if (!customerId) {
+    const { data: customer, error: ce } = await db.from("customers")
+      .upsert({ email, first_name: firstName, last_name: lastName, phone, language: trip.language }, { onConflict: "email" })
+      .select("id").single();
+    if (ce) throw ce;
+    customerId = customer.id;
+  }
+
+  const online = rules.paymentMode === "online" && !useBalance;
   const expires = online ? new Date(Date.now() + rules.holdMinutes * 60000) : null;
   const { data: row, error } = await db.from("bookings").insert({
     source: "website", service_type: serviceType,
-    status: online ? "pending_payment" : "confirmed", payment_status: online ? "pending" : "cash_on_ride",
-    customer_id: customer.id, customer_first_name: firstName, customer_last_name: lastName, customer_email: email, customer_phone: phone,
+    status: online ? "pending_payment" : "confirmed",
+    payment_status: online ? "pending" : useBalance ? "pending" : "cash_on_ride",
+    payment_method: useBalance ? "balance" : null,
+    customer_id: customerId, customer_first_name: firstName, customer_last_name: lastName, customer_email: email, customer_phone: phone,
     language: trip.language, passengers, luggage,
     flight_number: c.flightNumber ? str(c.flightNumber, 20).toUpperCase() : null,
     customer_notes: c.notes ? str(c.notes, 1000) : null,
@@ -227,7 +252,7 @@ async function actionCreate(body: any) {
     distance_km: trip.distanceKm, driving_duration_minutes: trip.drivingDurationMinutes, wait_minutes: trip.waitMinutes,
     duration_minutes: trip.durationMinutes, route_source: trip.routeSource,
     vehicle_id: chosen.id, vehicle_name: chosen.name,
-    price_amount: chosen.price, wait_fee: Math.round(trip.waitMinutes * rules.waitRate * 100) / 100, currency: "EUR",
+    price_amount: price, wait_fee: Math.round(trip.waitMinutes * rules.waitRate * 100) / 100, currency: "EUR",
     payment_expires_at: expires ? expires.toISOString() : null, terms_accepted_at: new Date().toISOString(),
   }).select("id, booking_reference, client_token, price_amount, payment_expires_at, ride_code, status, payment_status, booking_start").single();
   if (error) throw error;
@@ -245,6 +270,7 @@ async function actionCreate(body: any) {
     success: true, bookingId: row.id, bookingReference: row.booking_reference, clientToken: row.client_token,
     amount: Number(row.price_amount), currency: "EUR", paymentExpiresAt: row.payment_expires_at,
     status: row.status, paymentStatus: row.payment_status, paymentMode: rules.paymentMode, rideCode: row.ride_code,
+    paidFromBalance: useBalance, rideLink: `ride.html?b=${row.id}&t=${row.client_token}`,
     bookingStart: row.booking_start, smsQueued,
   };
 }
@@ -268,7 +294,7 @@ Deno.serve(async (req) => {
     switch (body.action) {
       case "config": return json(await actionConfig());
       case "vehicles": return json(await actionVehicles(body));
-      case "create": return json(await actionCreate(body));
+      case "create": return json(await actionCreate(body, req));
       case "cancel": return json(await actionCancel(body));
       default: return json({ success: false, error: "Unknown action." }, 400);
     }
