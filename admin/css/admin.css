@@ -444,3 +444,24 @@ input[type="file"].input { padding: 7px 10px; height: auto; }
 .radius-row > span { font-weight: 600; }
 .radius-row small { flex-basis: 100%; }
 @media (max-width: 640px) { .area-map { height: 260px; } }
+
+/* ---------- monthly rides, shifts, chat ---------- */
+.route-list { list-style: none; margin: 0 0 12px; padding: 0 0 0 20px; position: relative; display: flex; flex-direction: column; gap: 6px; }
+.route-list::before { content: ""; position: absolute; left: 5px; top: 7px; bottom: 7px; width: 2px; background: #e4d7bb; }
+.route-list li { position: relative; }
+.route-list li::before { content: ""; position: absolute; left: -19px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: #d9ae5f; }
+.route-list li.is-dest::before { background: #0e1116; border-radius: 2px; }
+.tbl tr.is-muted td { opacity: .5; }
+.chip-card { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--line, #e3e5e9); border-radius: 12px; background: #fff; text-align: left; cursor: pointer; }
+.chip-card small { display: block; color: #6b6f76; }
+.live-dot { width: 10px; height: 10px; border-radius: 50%; background: #1f9d57; box-shadow: 0 0 0 4px rgba(31,157,87,.18); flex: none; }
+.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.chat-box { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; padding: 4px 2px; margin-bottom: 10px; }
+.chat-msg { max-width: 85%; padding: 8px 12px; border-radius: 12px; background: #f1f2f4; align-self: flex-start; }
+.chat-msg small { display: block; color: #6b6f76; font-size: 12px; }
+.chat-msg p { margin: 0; white-space: pre-wrap; word-break: break-word; }
+.chat-msg.is-office { align-self: flex-end; background: #e6f0ff; }
+.chat-msg.is-driver { background: #fbeccd; }
+.chat-form { display: flex; gap: 8px; }
+.progress-list { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: #6b6f76; }
+.progress-list b { color: #16181c; }
