@@ -1,9 +1,10 @@
 // Settings: company, booking rules, notifications, integrations, team, finance, activity log
 // Each section is one function in SECTIONS – add a new one there to extend the settings.
 import { sb, check, callFunction } from "../core/supabase.js";
-import { h, icon, btn, badge, empty, card, toast, toastError, openDrawer, confirmDialog, form, busy, dl, table, clear, put } from "../core/ui.js";
+import { h, icon, btn, badge, empty, card, toast, toastError, openDrawer, confirmDialog, form, busy, dl, table, clear, put, debounce } from "../core/ui.js";
 import { dateTime, relative, num, label, fullName } from "../core/format.js";
 import { settings as loadSettings, saveSetting, invalidate } from "../core/data.js";
+import { searchPlaces, placeDetails, createAreaMap, createOverviewMap } from "../core/maps.js";
 import { can, me, ROLE_INFO, passwordProblem } from "../core/auth.js";
 
 const isOwner = () => me().role === "owner";
@@ -11,6 +12,7 @@ const canEdit = () => can("settings.edit");
 
 const SECTIONS = [
   { id: "company", label: "Company", icon: "building", render: company },
+  { id: "areas", label: "Pickup area", icon: "pin", render: pickupAreas },
   { id: "booking", label: "Booking rules", icon: "sliders", render: booking },
   { id: "notifications", label: "Notifications", icon: "sms", render: notifications },
   { id: "integrations", label: "Integrations", icon: "plug", render: integrations },
@@ -76,7 +78,12 @@ async function company() {
     if (!f.validate()) return;
     busy(save, async () => { try { check(await sb.from("company_profile").update(f.values()).eq("id", 1)); toast("Company saved"); } catch (e) { toastError(e); } });
   } });
-  return card("Company profile", h("div", {}, readOnlyNote(), f.el, canEdit() ? actions(save) : null));
+  const areas = check(await sb.from("service_areas").select("name, address, pickup_radius_km, is_active").order("sort_order"));
+  const areaInfo = card("Company location & pickup area", h("div", { class: "row between" },
+    h("div", {}, areas.length ? areas.map((a) => h("p", {}, h("strong", {}, a.name), " · ", `${num(a.pickup_radius_km, 0)} km radius`, a.address ? h("small", { class: "muted", style: { display: "block" } }, a.address) : null))
+      : h("p", { class: "muted" }, "Not set yet – website bookings need a pickup area.")),
+    btn(areas.length ? "Change on map" : "Set on map", { ic: "pin", variant: areas.length ? "" : "primary", onClick: () => reopen("areas") })));
+  return [areaInfo, card("Company profile", h("div", {}, readOnlyNote(), f.el, canEdit() ? actions(save) : null))];
 }
 
 /* ---------------- booking rules + service areas ---------------- */
@@ -126,39 +133,128 @@ async function booking() {
     });
   } });
 
-  const areas = check(await sb.from("service_areas").select("*").order("sort_order"));
-  const areaCard = card("Service areas", table({
-    rows: areas, onRow: canEdit() ? (a) => editArea(a) : null,
-    emptyEl: empty("No service area", "Without a service area no website bookings are possible.", null, "pin"),
-    columns: [
-      { label: "Name", render: (a) => h("strong", {}, a.name) },
-      { label: "Centre", render: (a) => h("a", { href: `https://www.google.com/maps?q=${a.latitude},${a.longitude}`, target: "_blank", rel: "noopener" }, `${num(a.latitude, 4)}, ${num(a.longitude, 4)}`) },
-      { label: "Pickup radius", render: (a) => `${num(a.pickup_radius_km, 0)} km` },
-      { label: "", render: (a) => badge(a.is_active ? "active" : "inactive") },
-    ] }), { cls: "flush", sub: "Customers can book pickups inside these circles.", actions: canEdit() ? btn("Add area", { small: true, ic: "plus", onClick: () => editArea() }) : null });
+  return card("Booking rules", h("div", {}, readOnlyNote(), f.el, canEdit() ? actions(save) : null), { sub: "Used by the website booking page and price calculation. The pickup area is set under “Pickup area”." });
+}
 
-  function editArea(a = null) {
-    const af = form([
-      { name: "name", label: "Name", required: true, span: 2, placeholder: "Frankfurt am Main" },
-      { name: "latitude", label: "Latitude", type: "number", step: "0.000001", required: true, min: -90, max: 90 },
-      { name: "longitude", label: "Longitude", type: "number", step: "0.000001", required: true, min: -180, max: 180 },
-      { name: "pickup_radius_km", label: "Pickup radius (km)", type: "number", min: 1, max: 500, required: true },
-      { name: "sort_order", label: "Order", type: "number", min: 0 },
-      { name: "is_active", label: "Active", type: "checkbox", default: true },
-    ], a || { pickup_radius_km: 50, sort_order: 10 });
-    const d = openDrawer({ title: a ? `Edit ${a.name}` : "Add service area", subtitle: "Tip: right-click a place in Google Maps to copy its coordinates.", body: af.el });
-    d.setFooter([btn("Cancel", { onClick: d.close }), btn("Save", { variant: "primary", onClick: (e) => {
-      if (!af.validate()) return;
-      busy(e.currentTarget, async () => {
-        try {
-          const v = af.values(); v.sort_order = v.sort_order ?? 10;
-          if (a) check(await sb.from("service_areas").update(v).eq("id", a.id)); else check(await sb.from("service_areas").insert(v));
-          toast("Service area saved"); d.close(); document.querySelector('.settings-nav [data-id="booking"]').click();
-        } catch (err) { toastError(err); }
-      });
-    } })]);
+/* ---------------- pickup area (company location + radius) ---------------- */
+const reopen = (id) => document.querySelector(`.settings-nav [data-id="${id}"]`)?.click();
+async function pickupAreas() {
+  const areas = check(await sb.from("service_areas").select("*").order("sort_order"));
+  const mapEl = h("div", { class: "area-map area-map-lg" }, h("div", { class: "loading" }, h("span", { class: "spin" }), "Loading map…"));
+  const list = table({
+    rows: areas, onRow: canEdit() ? (a) => editArea(a) : null, rowClass: (a) => (a.is_active ? "" : "is-muted"),
+    emptyEl: empty("No pickup area yet", "Add your company address – customers can then book pickups inside the radius around it.",
+      canEdit() ? btn("Add company location", { variant: "primary", ic: "plus", onClick: () => editArea() }) : null, "pin"),
+    columns: [
+      { label: "Location", render: (a) => h("div", {}, h("strong", {}, a.name), h("small", {}, a.address || `${num(a.latitude, 5)}, ${num(a.longitude, 5)}`)) },
+      { label: "Pickup radius", render: (a) => h("strong", {}, `${num(a.pickup_radius_km, 0)} km`) },
+      { label: "", render: (a) => badge(a.is_active ? "active" : "inactive") },
+    ] });
+  if (areas.length) createOverviewMap(mapEl, areas).catch((e) => put(mapEl, h("div", { class: "note red" }, e.message)));
+  return [
+    card("Pickup area", h("div", {}, areas.length ? mapEl : null, list), { cls: areas.length ? "" : "flush",
+      sub: "The website only accepts pickups inside these circles. Search your company name or address, then set the radius.",
+      actions: canEdit() && areas.length ? btn("Add location", { small: true, ic: "plus", onClick: () => editArea() }) : null }),
+  ];
+}
+
+function editArea(a = null) {
+  const st = {
+    name: a?.name || "", address: a?.address || "", lat: a ? Number(a.latitude) : null, lng: a ? Number(a.longitude) : null,
+    placeId: a?.place_id || null, radius: a ? Number(a.pickup_radius_km) : 50, active: a ? a.is_active : true,
+  };
+  const MAX = 200;
+  let mapApi = null;
+
+  // search
+  const search = h("input", { class: "input", type: "search", placeholder: "Type the company name or address, e.g. Day Drive Service Frankfurt", autocomplete: "off" });
+  const sugg = h("ul", { class: "place-suggest", hidden: true, role: "listbox" });
+  const picked = h("div", { class: "place-picked" });
+  const drawPicked = () => put(picked, st.lat == null ? h("p", { class: "muted small" }, "No location chosen yet.") :
+    h("div", { class: "row", style: { flexWrap: "nowrap", alignItems: "flex-start" } }, icon("pin", 18),
+      h("div", {}, h("strong", {}, st.name || "Chosen point"), h("small", { class: "muted", style: { display: "block" } }, st.address || `${num(st.lat, 5)}, ${num(st.lng, 5)} (point set on the map)`))));
+  let seq = 0;
+  const runSearch = debounce(async () => {
+    const q = search.value.trim(); const my = ++seq;
+    if (q.length < 3) { sugg.hidden = true; return; }
+    try {
+      const res = await searchPlaces(q, st.lat != null ? { lat: st.lat, lng: st.lng } : null);
+      if (my !== seq) return;
+      put(sugg, res.length ? res.map((r) => h("li", { role: "option", tabindex: 0, onClick: () => choose(r), onKeydown: (e) => { if (e.key === "Enter") choose(r); } },
+        icon("pin", 16), h("span", {}, h("strong", {}, r.main), h("small", {}, r.secondary)))) : h("li", { class: "muted" }, "Nothing found"));
+      sugg.hidden = false;
+    } catch (e) { put(sugg, h("li", { class: "money-neg" }, e.message)); sugg.hidden = false; }
+  }, 250);
+  search.addEventListener("input", runSearch);
+  search.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); sugg.hidden = true; } });
+  async function choose(r) {
+    sugg.hidden = true; search.value = r.main;
+    try {
+      const p = await placeDetails(r.prediction);
+      Object.assign(st, { lat: p.lat, lng: p.lng, address: p.address, placeId: p.placeId });
+      if (!nameIn.value.trim() || nameIn.dataset.auto === "1") { nameIn.value = p.name || r.main; nameIn.dataset.auto = "1"; }
+      st.name = nameIn.value.trim();
+      drawPicked(); mapApi?.setCenter(p.lat, p.lng);
+    } catch (e) { toastError(e); }
   }
-  return [card("Booking rules", h("div", {}, readOnlyNote(), f.el, canEdit() ? actions(save) : null), { sub: "Used by the website booking page and price calculation." }), areaCard];
+
+  // map
+  const mapEl = h("div", { class: "area-map" }, h("div", { class: "loading" }, h("span", { class: "spin" }), "Loading map…"));
+  const startMap = () => createAreaMap(mapEl, { lat: st.lat, lng: st.lng, radiusKm: st.radius,
+    onMove: (la, ln) => { Object.assign(st, { lat: la, lng: ln, address: "", placeId: null }); drawPicked(); } })
+    .then((m) => { mapApi = m; }).catch((e) => put(mapEl, h("div", { class: "note red" }, e.message)));
+
+  // radius: slider + number
+  const range = h("input", { type: "range", class: "range", min: 1, max: MAX, step: 1, value: st.radius, "aria-label": "Pickup radius in km" });
+  const numIn = h("input", { class: "input radius-num", type: "number", min: 1, max: 500, step: 1, value: st.radius, inputmode: "numeric", "aria-label": "Pickup radius in km" });
+  const paint = () => range.style.setProperty("--fill", `${(Math.min(st.radius, MAX) / MAX) * 100}%`);
+  const setRadius = (v, from) => {
+    v = Math.max(1, Math.min(500, Math.round(Number(v) || 0))); if (!v) return;
+    st.radius = v;
+    if (from !== "range") range.value = Math.min(v, MAX);
+    if (from !== "num") numIn.value = v;
+    paint(); mapApi?.setRadius(v);
+  };
+  range.addEventListener("input", () => setRadius(range.value, "range"));
+  numIn.addEventListener("input", () => { if (numIn.value !== "") setRadius(numIn.value, "num"); });
+  numIn.addEventListener("blur", () => setRadius(numIn.value || st.radius));
+  paint();
+
+  const nameIn = h("input", { class: "input", placeholder: "e.g. Day Drive Service – Frankfurt", value: st.name });
+  nameIn.addEventListener("input", () => { nameIn.dataset.auto = "0"; st.name = nameIn.value.trim(); if (st.lat != null) drawPicked(); });
+  const active = h("input", { type: "checkbox", checked: st.active });
+
+  const body = h("div", { class: "area-editor" },
+    h("label", { class: "field" }, h("span", { class: "field-label" }, "Company name or address"), h("div", { class: "place-search" }, icon("search", 16), search, sugg)),
+    picked, mapEl,
+    h("p", { class: "muted small", style: { margin: "6px 0 0" } }, "Tip: drag the pin or click the map to fine-tune the centre."),
+    h("div", { class: "field", style: { marginTop: "18px" } },
+      h("span", { class: "field-label" }, "Pickup radius"), range,
+      h("div", { class: "radius-row" }, numIn, h("span", {}, "km"), h("small", { class: "muted" }, `Slider up to ${MAX} km – type a bigger number if needed.`))),
+    h("label", { class: "field", style: { marginTop: "14px" } }, h("span", { class: "field-label" }, "Name shown to admins"), nameIn),
+    h("label", { class: "check" }, active, h("span", {}, "Active – accept website pickups in this area")));
+  drawPicked();
+
+  const d = openDrawer({ title: a ? `Edit ${a.name}` : "Add company location", subtitle: "Customers can book pickups inside the circle.", body, wide: true });
+  startMap();
+  const foot = [];
+  if (a) foot.push(btn("Delete", { variant: "ghost", ic: "x", onClick: async () => {
+    if (!(await confirmDialog({ title: `Delete ${a.name}?`, message: "Pickups in this area will no longer be possible.", confirmText: "Delete", danger: true }))) return;
+    try { check(await sb.from("service_areas").delete().eq("id", a.id)); toast("Area deleted"); d.close(); reopen("areas"); } catch (e) { toastError(e); }
+  } }), h("span", { class: "spacer" }));
+  foot.push(btn("Cancel", { onClick: d.close }), btn("Save", { variant: "primary", onClick: (e) => busy(e.currentTarget, async () => {
+    try {
+      if (st.lat == null) throw new Error("Search the company name or address first, or click the map.");
+      const name = nameIn.value.trim() || st.address.split(",")[0] || "Pickup area";
+      const row = { name, address: st.address || null, place_id: st.placeId, latitude: Number(st.lat.toFixed(6)), longitude: Number(st.lng.toFixed(6)),
+        pickup_radius_km: st.radius, is_active: active.checked };
+      if (a) check(await sb.from("service_areas").update(row).eq("id", a.id));
+      else check(await sb.from("service_areas").insert({ ...row, sort_order: 10 }));
+      toast("Pickup area saved – the website uses it right away"); d.close(); reopen("areas");
+    } catch (err) { toastError(err); }
+  }) }));
+  d.setFooter(foot);
+  setTimeout(() => search.focus(), 60);
 }
 
 /* ---------------- notifications ---------------- */
