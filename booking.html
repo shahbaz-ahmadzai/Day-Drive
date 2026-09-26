@@ -12,8 +12,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Barlow:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202609261100">
-  <link rel="stylesheet" href="css/dd-booking.css?v=202609261100">
+  <link rel="stylesheet" href="css/style.css?v=202609271000">
+  <link rel="stylesheet" href="css/dd-booking.css?v=202609271000">
 </head>
 <body data-page="booking" data-title-key="meta.title.booking" class="ddb-body">
 
@@ -202,6 +202,7 @@
           <div><span data-i18n="bk.c.total"></span><strong class="ddb-selected-price" id="ddbSelectedPrice">—</strong></div>
         </div>
         <p class="ddb-pay-note" id="ddbPayNote" hidden><span data-icon="wallet"></span><span data-i18n="bk.c.payOnRide"></span></p>
+        <div class="ddb-balance" id="ddbBalance" hidden></div>
 
         <label class="ddb-terms">
           <input type="checkbox" id="ddbTerms">
@@ -264,7 +265,8 @@
         <div class="ddb-done-route"><dt data-i18n="bk.d.route"></dt><dd id="ddbDoneRoute">—</dd></div>
         <div class="is-total"><dt data-i18n="bk.d.total"></dt><dd id="ddbDoneAmount">—</dd></div>
       </dl>
-      <p class="ddb-done-pay"><span data-icon="wallet"></span><span data-i18n="bk.d.payment"></span></p>
+      <p class="ddb-done-pay"><span data-icon="wallet"></span><span id="ddbDonePayText" data-i18n="bk.d.payment"></span></p>
+      <a class="btn btn-gold ddb-done-ride" id="ddbDoneRide" href="#" hidden data-i18n="acc.ride.open"></a>
       <p class="ddb-done-help"><span data-i18n="bk.d.help"></span> <a href="tel:+4917643241205">0176 432 412 05</a></p>
       <div class="ddb-done-actions">
         <a class="btn btn-outline" href="index.html" data-i18n="bk.d.home"></a>
@@ -279,11 +281,13 @@
 
   <div id="site-footer"></div>
 
-  <script src="js/translations.js?v=202609261100"></script>
-  <script src="js/layout.js?v=202609261100"></script>
-  <script src="js/main.js?v=202609261100"></script>
-  <script src="js/dd-booking-api.js?v=202609261100"></script>
-  <script src="js/dd-booking-map.js?v=202609261100"></script>
-  <script src="js/dd-booking-checkout.js?v=202609261100"></script>
+  <script src="js/translations.js?v=202609271000"></script>
+  <script src="js/translations-account.js?v=202609271000"></script>
+  <script src="js/layout.js?v=202609271000"></script>
+  <script src="js/main.js?v=202609271000"></script>
+  <script src="js/dd-booking-api.js?v=202609271000"></script>
+  <script src="js/dd-booking-map.js?v=202609271000"></script>
+  <script src="js/dd-booking-checkout.js?v=202609271000"></script>
+  <script type="module" src="js/dd-booking-balance.js?v=202609271000"></script>
 </body>
 </html>
