@@ -418,3 +418,29 @@ input[type="file"].input { padding: 7px 10px; height: auto; }
   .bar-row .bar { grid-column: 1 / -1; grid-row: 2; }
   #toasts { right: 16px; left: 16px; top: 70px; }
 }
+
+/* ---------- pickup area editor ---------- */
+.area-map { height: 320px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--bg); margin-top: 12px; display: grid; }
+.area-map .loading { padding: 0; }
+.area-map-lg { height: 300px; margin: 0 0 16px; }
+.place-search { position: relative; }
+.place-search > .ic { position: absolute; left: 12px; top: 12px; color: var(--faint); pointer-events: none; }
+.place-search .input { padding-left: 36px; }
+.place-suggest { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 5; list-style: none; margin: 0; padding: 4px; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow-lg); max-height: 280px; overflow-y: auto; }
+.place-suggest li { display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; border-radius: 7px; cursor: pointer; }
+.place-suggest li:hover, .place-suggest li:focus { background: var(--bg); outline: none; }
+.place-suggest li .ic { color: var(--gold-strong); margin-top: 2px; }
+.place-suggest li strong { display: block; font-weight: 600; }
+.place-suggest li small { display: block; color: var(--muted); }
+.place-picked { margin-top: 12px; padding: 11px 13px; border-radius: 8px; background: var(--gold-soft); color: #5b4217; }
+.place-picked .ic { color: var(--gold-strong); margin-top: 1px; }
+.range { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; margin: 12px 0 10px;
+  background: linear-gradient(to right, var(--gold-strong) 0 var(--fill, 25%), var(--grey-bg) var(--fill, 25%) 100%); cursor: pointer; }
+.range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--gold-strong); box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+.range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid var(--gold-strong); }
+.range:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.radius-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.radius-row .radius-num { width: 110px; font-weight: 600; font-size: 16px; }
+.radius-row > span { font-weight: 600; }
+.radius-row small { flex-basis: 100%; }
+@media (max-width: 640px) { .area-map { height: 260px; } }
