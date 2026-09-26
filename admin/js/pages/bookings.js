@@ -1,6 +1,6 @@
 // Bookings: list with filters, detail panel (assign, status, SMS, notes, timeline), phone bookings
 import { sb, check, callFunction } from "../core/supabase.js";
-import { h, icon, btn, badge, table, empty, card, toast, toastError, openDrawer, confirmDialog, form, busy, debounce, dl, clear, statusLabel, downloadText, toCSV } from "../core/ui.js";
+import { h, icon, btn, badge, table, empty, card, toast, toastError, openDrawer, confirmDialog, form, busy, debounce, dl, clear, statusLabel, downloadText, toCSV, put } from "../core/ui.js";
 import { money, dateTime, date, time, weekdayDate, num, berlinLocalToISO, isoToBerlinLocal, todayISO, relative } from "../core/format.js";
 import { vehicles as loadVehicles, drivers as loadDrivers, SERVICE_TYPES, BOOKING_STATUSES, PAYMENT_STATUSES, serviceLabel } from "../core/data.js";
 import { can, me } from "../core/auth.js";
@@ -168,6 +168,23 @@ export default {
           }) });
 
           const smsSent = sms.filter((s) => s.template === "booking_confirmation");
+
+          // progress from the driver app + chat between customer, driver and office
+          const prog = [["Accepted", b.driver_accepted_at], ["On the way", b.on_the_way_at], ["Arrived", b.arrived_at], ["Picked up", b.picked_up_at], ["Completed", b.completed_at]].filter(([, v]) => v);
+          const chatBox = h("div", { class: "chat-box" });
+          const drawChat = async () => {
+            const msgs = check(await sb.from("ride_messages").select("id, sender_type, body, created_at").eq("booking_id", b.id).order("created_at"));
+            put(chatBox, msgs.length ? msgs.map((m) => h("div", { class: "chat-msg is-" + m.sender_type }, h("small", {}, `${{ customer: "Customer", driver: "Driver", office: "Office" }[m.sender_type] || m.sender_type} · ${dateTime(m.created_at)}`), h("p", {}, m.body)))
+              : h("p", { class: "muted small" }, "No messages yet. Customer and driver can chat on the ride page / in the driver app."));
+            chatBox.scrollTop = chatBox.scrollHeight;
+            if (msgs.some((m) => m.sender_type !== "office")) sb.rpc("mark_ride_messages_read", { p_booking_id: b.id }).then(() => {});
+          };
+          const chatInput = h("input", { class: "input", placeholder: "Message to customer and driver…", maxlength: "1000" });
+          const chatForm = h("form", { class: "chat-form", onSubmit: (e) => { e.preventDefault(); const text = chatInput.value.trim(); if (!text) return;
+            busy(e.submitter, async () => { try { const { error } = await sb.rpc("send_ride_message", { p_booking_id: b.id, p_body: text }); if (error) throw new Error(error.message); chatInput.value = ""; drawChat(); } catch (err) { toastError(err); } }); } },
+            chatInput, btn("Send", { type: "submit", small: true, variant: "primary" }));
+          drawChat().catch(() => put(chatBox, h("p", { class: "muted small" }, "Chat could not be loaded.")));
+          const rideLink = b.client_token ? new URL(`../ride.html?b=${b.id}&t=${b.client_token}`, location.href).href : null;
           d.setBody(h("div", {},
             h("div", { class: "grid grid-2" },
               h("div", {},
@@ -202,6 +219,13 @@ export default {
               h("label", { class: "field" }, h("span", { class: "field-label" }, "Vehicle"), vSel),
               h("label", { class: "field" }, h("span", { class: "field-label" }, "Driver"), dSel),
               editable && isOpen ? h("div", { class: "form-actions span-2" }, saveAssign) : null),
+            prog.length ? h("p", { class: "progress-list", style: { marginTop: "8px" } }, prog.map(([k, v]) => h("span", {}, `${k} `, h("b", {}, time(v)))), b.code_verified ? h("span", {}, "· code checked") : null,
+              b.collected_method && b.collected_method !== "none" ? h("span", {}, `· collected ${b.collected_method} ${money(b.collected_amount)}`) : null) : null,
+
+            h("p", { class: "section-title" }, "Chat"),
+            chatBox, editable ? chatForm : null,
+            rideLink ? h("p", { class: "muted small", style: { marginTop: "6px" } }, "Customer ride page: ", h("a", { href: rideLink, target: "_blank", rel: "noopener" }, "open"), " · ",
+              h("a", { href: "#", onClick: (e) => { e.preventDefault(); navigator.clipboard?.writeText(rideLink).then(() => toast("Link copied")); } }, "copy link")) : null,
 
             h("p", { class: "section-title" }, "Payment"),
             dl([

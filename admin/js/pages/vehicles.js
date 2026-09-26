@@ -15,6 +15,9 @@ function expiryChip(labelText, d) {
   return h("span", { class: `badge badge-${tone}` }, `${labelText} ${date(d)}`);
 }
 
+const EVENT_LABEL = { shift_started: "Work started", shift_ended: "Work ended", unlocked: "Unlocked", locked: "Locked", engine_on: "Engine on", engine_off: "Engine off",
+  start_blocked: "Start blocked (no driver logged in)", ble_connected: "Bluetooth connected", ble_failed: "Bluetooth failed", odometer: "Odometer" };
+
 export default {
   async render(root, { params, setParams, go }) {
     const editable = can("fleet.edit");
@@ -71,7 +74,7 @@ export default {
           d.el.querySelector(".drawer-head h2").textContent = v.display_name;
           const body = h("div", {});
           const content = h("div", {});
-          body.append(tabs([["overview", "Overview"], ["rides", "Rides"], ["costs", "Costs"], ["drivers", "Drivers"]], (k) => show(k), tab), content);
+          body.append(tabs([["overview", "Overview"], ["rides", "Rides"], ["costs", "Costs"], ["drivers", "Drivers"], ["log", "Car log"], ["device", "Starter box"]], (k) => show(k), tab), content);
           const show = async (k) => {
             put(content, h("div", { class: "loading" }, h("span", { class: "spin" })));
             if (k === "overview") {
@@ -89,6 +92,7 @@ export default {
                     ["Online booking", v.online_booking ? badge("active", "green") : badge("off", "grey")],
                     ["Category", v.category_label || v.category], ["Price per km", money(v.price_per_km)], ["Minimum fare", money(v.minimum_fare)],
                     ["Airport fee", money(v.airport_fee)], ["Night surcharge", `${plain(v.night_surcharge_pct)} %`],
+                    ["Monthly rides", v.regular_price_per_km || v.regular_minimum_fare ? `${money(v.regular_price_per_km ?? v.price_per_km)} / km · min. ${money(v.regular_minimum_fare ?? v.minimum_fare)}` : h("span", { class: "muted" }, "same as normal prices")],
                   ]),
                   h("p", { class: "section-title" }, "Dates & service"), dl([
                     ["TÜV / HU", v.tuv_expiry ? h("span", {}, date(v.tuv_expiry), " ", expiryChip("", v.tuv_expiry)) : null],
@@ -119,6 +123,28 @@ export default {
                 table({ rows: entries, emptyEl: empty("No entries this year", null, btn("Add expense", { ic: "receipt", onClick: () => { d.close(); go("expense", { vehicle: v.id }); } }), "receipt"), columns: [
                   { label: "Date", render: (e) => date(e.entry_date) }, { label: "Category", render: (e) => e.category_code.replace(/_/g, " ") }, { label: "Description", key: "description" },
                   { label: "Amount", cls: "right", render: (e) => h("span", { class: e.kind === "income" ? "money-pos" : "money-neg" }, (e.kind === "income" ? "+" : "−") + money(e.gross_amount)) }] }));
+            } else if (k === "log") {
+              const ev = check(await sb.from("vehicle_events").select("id, event_type, source, data, occurred_at, drivers(display_name)").eq("vehicle_id", v.id).order("occurred_at", { ascending: false }).limit(100));
+              put(content, h("p", { class: "muted small", style: { marginBottom: "10px" } }, "Who used the car and when: work start/end from the driver app and signals from the starter box."),
+                table({ rows: ev, emptyEl: empty("No activity yet", "Entries appear when drivers start work in the driver app.", null, "clock"), columns: [
+                  { label: "When", render: (e) => dateTime(e.occurred_at) },
+                  { label: "What", render: (e) => h("div", {}, h("strong", {}, EVENT_LABEL[e.event_type] || e.event_type), h("small", {}, e.source === "device" ? "Starter box" : "Driver app")) },
+                  { label: "Driver", render: (e) => e.drivers?.display_name || "–" },
+                  { label: "Details", render: (e) => h("small", { class: "mono" }, e.data?.odometer_km ? `${plain(e.data.odometer_km)} km` : e.data && Object.keys(e.data).length ? JSON.stringify(e.data).slice(0, 80) : "") }] }));
+            } else if (k === "device") {
+              const dev = check(await sb.from("vehicle_devices").select("*").eq("vehicle_id", v.id).maybeSingle());
+              const isOwner = can("settings.edit");
+              put(content,
+                h("div", { class: "note", style: { marginBottom: "12px" } }, "The starter box (ESP32 + relay) only lets the engine start while a driver has started work for this car in the driver app. Connection: Bluetooth from the driver's phone, or mobile internet (LTE)."),
+                dev ? dl([
+                  ["Device ID", h("span", { class: "mono" }, dev.device_uid)], ["Connection", dev.mode === "lte" ? "Mobile internet (LTE)" : "Bluetooth"],
+                  ["Status", badge(dev.is_active ? "active" : "inactive")], ["Last contact", dev.last_seen_at ? dateTime(dev.last_seen_at) : "never"],
+                  ["Firmware", dev.firmware_version], ["Last state", dev.last_state && Object.keys(dev.last_state).length ? h("span", { class: "mono small" }, JSON.stringify(dev.last_state)) : null],
+                ]) : empty("No starter box yet", "Register the box when it is built into the car. You get a secret key to put into the box.", null, "plug"),
+                isOwner ? h("div", { class: "row", style: { marginTop: "12px" } },
+                  btn(dev ? "Replace / new key" : "Register starter box", { ic: "plug", small: true, onClick: () => registerDevice(v, dev, () => show("device")) }),
+                  dev ? btn(dev.is_active ? "Switch off" : "Switch on", { small: true, onClick: async (e) => busy(e.currentTarget, async () => {
+                    try { check(await sb.from("vehicle_devices").update({ is_active: !dev.is_active }).eq("id", dev.id)); show("device"); } catch (err) { toastError(err); } }) }) : null) : null);
             } else if (k === "drivers") {
               const as = check(await sb.from("vehicle_assignments").select("id, starts_at, ends_at, notes, driver_id, drivers(display_name)").eq("vehicle_id", v.id).order("starts_at", { ascending: false }).limit(20));
               put(content, 
@@ -139,6 +165,29 @@ export default {
         } catch (e) { toastError(e); d.close(); }
       };
       draw();
+    }
+
+    function registerDevice(v, dev, after) {
+      const f = form([
+        { name: "device_uid", label: "Device ID (printed on the box)", required: true, placeholder: "DD-TOURAN-01", validate: (x) => (/^[A-Za-z0-9_-]{4,64}$/.test(x) ? "" : "4–64 letters, numbers, - or _") },
+        { name: "mode", label: "Connection", type: "select", options: [["ble", "Bluetooth (phone of the driver)"], ["lte", "Mobile internet (LTE)"]], default: "ble" },
+      ], dev || {}, { cols: 1 });
+      const m = openDrawer({ title: dev ? "New key for the starter box" : "Register starter box", subtitle: v.display_name, body: f.el });
+      m.setFooter([btn("Cancel", { onClick: m.close }), btn(dev ? "Create new key" : "Register", { variant: "primary", onClick: (e) => {
+        if (!f.validate()) return;
+        busy(e.currentTarget, async () => {
+          try {
+            const val = f.values();
+            const { data, error } = await sb.rpc("admin_register_device", { p_vehicle_id: v.id, p_device_uid: val.device_uid, p_mode: val.mode });
+            if (error) throw new Error(error.message);
+            m.setBody(h("div", {},
+              h("div", { class: "note green" }, "Saved. Put this secret key into the starter box now – it is shown only this once."),
+              dl([["Device ID", h("span", { class: "mono" }, data.device_uid)], ["Secret key", h("span", { class: "mono", style: { wordBreak: "break-all" } }, data.secret)]]),
+              btn("Copy key", { ic: "file", small: true, onClick: () => navigator.clipboard?.writeText(data.secret).then(() => toast("Copied")) })));
+            m.setFooter([btn("Done", { variant: "primary", onClick: () => { m.close(); after(); } })]);
+          } catch (err) { toastError(err); }
+        });
+      } })]);
     }
 
     /* ---------------- create / edit ---------------- */
@@ -170,6 +219,8 @@ export default {
         { name: "minimum_fare", label: "Minimum fare (EUR)", type: "number", step: "0.01", min: 0, required: true },
         { name: "airport_fee", label: "Airport fee (EUR)", type: "number", step: "0.01", min: 0 },
         { name: "night_surcharge_pct", label: "Night surcharge (%)", type: "number", step: "1", min: 0, max: 100 },
+        { name: "regular_price_per_km", label: "Monthly rides: price per km (EUR)", type: "number", step: "0.01", min: 0, hint: "Starting price for school / work contracts. Empty = normal price per km." },
+        { name: "regular_minimum_fare", label: "Monthly rides: minimum per ride (EUR)", type: "number", step: "0.01", min: 0, hint: "Empty = normal minimum fare." },
         { name: "online_booking", label: "Bookable on the website", type: "checkbox", default: true },
         { name: "sort_order", label: "Order on website", type: "number", min: 0, hint: "Lower numbers first" },
         { name: "image", label: "Photo", type: "file", accept: "image/*", span: 2, hint: v?.image_path ? "Leave empty to keep the current photo. Wide photos (16:9) look best." : "Wide photos (16:9) look best." },

@@ -1,5 +1,5 @@
 // Drivers: staff list, licences & permits, documents, vehicle assignment, rides
-import { sb, check, uploadFile, signedFileUrl } from "../core/supabase.js";
+import { sb, check, uploadFile, signedFileUrl, callFunction } from "../core/supabase.js";
 import { h, icon, btn, badge, empty, card, toast, toastError, openDrawer, confirmDialog, form, busy, dl, tabs, table, debounce, put } from "../core/ui.js";
 import { date, daysUntil, dateTime, money, todayISO, initials, label } from "../core/format.js";
 import { invalidate, vehicles as loadVehicles } from "../core/data.js";
@@ -90,6 +90,31 @@ export default {
                   can("finance.view") || can("*") ? ["Tax ID", d.tax_id] : null, can("finance.view") ? ["Social security no.", d.social_security_number] : null, can("finance.view") ? ["IBAN", d.iban ? h("span", { class: "mono" }, d.iban) : null] : null,
                 ]))),
                 d.internal_notes ? h("div", { class: "note", style: { marginTop: "14px" } }, d.internal_notes) : null);
+            } else if (k === "app") {
+              const appUrl = new URL("../driver/", location.href).href;
+              const isOwner = can("settings.edit");
+              put(content,
+                h("div", { class: "note", style: { marginBottom: "12px" } }, "The driver opens the app on the phone and adds it to the home screen. Login: username + PIN. The driver starts work there, gets rides and messages, enters expenses and ends the day with the Uber/Bolt earnings."),
+                dl([
+                  ["App address", h("a", { href: appUrl, target: "_blank", rel: "noopener", class: "mono" }, appUrl)],
+                  ["Username", d.username ? h("span", { class: "mono" }, d.username) : h("span", { class: "muted" }, "not set")],
+                  ["Access", d.app_enabled ? badge("active", "green") : badge("off", "grey")],
+                  ["App language", { de: "Deutsch", en: "English", ar: "العربية", ps: "پښتو", fa: "دری (Dari)" }[d.app_language] || d.app_language || "–"],
+                  ["Login created", d.auth_user_id ? "yes" : "no (created with the first PIN)"],
+                ]),
+                isOwner ? h("div", { class: "row", style: { marginTop: "12px" } },
+                  btn(d.username ? "New PIN / change username" : "Give app access", { variant: "primary", ic: "lock", small: true, onClick: () => setPin(d, () => drawAll("app")) }),
+                  d.app_enabled ? btn("Switch off access", { small: true, onClick: async (e) => {
+                    if (!(await confirmDialog({ title: "Switch off app access?", message: `${d.display_name} can no longer log in to the driver app.`, confirmText: "Switch off", danger: true }))) return;
+                    busy(e.currentTarget, async () => { try { await callFunction("driver-auth", { action: "disable", driverId: d.id }); toast("App access switched off"); drawAll("app"); } catch (err) { toastError(err); } });
+                  } }) : null) : h("p", { class: "muted small" }, "Only owner/admin can change app logins."));
+            } else if (k === "shifts") {
+              const sh = check(await sb.from("driver_shifts").select("id, shift_no, status, started_at, ended_at, start_odometer_km, end_odometer_km, uber_earnings, bolt_earnings, other_platform_earnings, cash_earnings, card_earnings, vehicles(display_name)").eq("driver_id", d.id).order("started_at", { ascending: false }).limit(30));
+              put(content, table({ rows: sh, onRow: () => { dr.close(); go("shifts", { driver: d.id }); }, emptyEl: empty("No shifts yet", "Shifts appear when the driver starts work in the driver app.", null, "clock"), columns: [
+                { label: "Start", render: (x) => dateTime(x.started_at) }, { label: "Car", render: (x) => x.vehicles?.display_name },
+                { label: "km", cls: "right", render: (x) => (x.end_odometer_km && x.start_odometer_km ? String(x.end_odometer_km - x.start_odometer_km) : "–") },
+                { label: "Uber + Bolt", cls: "right", render: (x) => money(Number(x.uber_earnings) + Number(x.bolt_earnings) + Number(x.other_platform_earnings)) },
+                { label: "Status", render: (x) => badge(x.status === "open" ? "active" : "completed", x.status === "open" ? "green" : "grey") }] }));
             } else if (k === "documents") {
               const docs = check(await sb.from("driver_documents").select("*").eq("driver_id", d.id).order("created_at", { ascending: false }));
               put(content, 
@@ -129,12 +154,33 @@ export default {
                   { label: "Vehicle", key: "vehicle_name" }, { label: "Status", render: (r) => badge(r.status) }] }));
             }
           };
-          dr.setBody([tabs([["overview", "Overview"], ["documents", "Documents"], ["vehicle", "Vehicle"], ["rides", "Rides"]], show, activeTab), content]);
+          dr.setBody([tabs([["overview", "Overview"], ["app", "Driver app"], ["shifts", "Shifts"], ["documents", "Documents"], ["vehicle", "Vehicle"], ["rides", "Rides"]], show, activeTab), content]);
           show(activeTab);
           dr.setFooter(editable ? [h("span", { class: "spacer" }), btn("Edit", { variant: "primary", ic: "edit", onClick: () => openEditor(d, () => { drawAll(); load(); }) })] : [btn("Close", { onClick: dr.close })]);
         } catch (e) { toastError(e); dr.close(); }
       };
       drawAll();
+    }
+
+    function setPin(d, after) {
+      const suggestion = (d.username || `${d.first_name || ""}.${d.last_name || ""}`).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9._-]/g, "").slice(0, 40);
+      const f = form([
+        { name: "username", label: "Username", required: true, hint: "Letters, numbers, dot, dash. The driver types this to log in.", validate: (x) => (/^[a-z0-9._-]{3,40}$/.test(x.toLowerCase()) ? "" : "3–40 letters, numbers, . _ -") },
+        { name: "pin", label: "PIN (4–6 digits)", required: true, inputmode: "numeric", hint: "Not 1234, 0000 or the same digit repeated. Tell the driver in person.", validate: (x) => (/^\d{4,6}$/.test(x) ? "" : "4 to 6 digits") },
+      ], { username: suggestion, pin: String(Math.floor(100000 + Math.random() * 900000)).slice(0, 5) }, { cols: 1 });
+      const m = openDrawer({ title: "Driver app access", subtitle: d.display_name, body: f.el });
+      m.setFooter([btn("Cancel", { onClick: m.close }), btn("Save", { variant: "primary", onClick: (e) => {
+        if (!f.validate()) return;
+        busy(e.currentTarget, async () => {
+          try {
+            const v = f.values();
+            const r = await callFunction("driver-auth", { action: "set_pin", driverId: d.id, pin: v.pin, username: v.username.toLowerCase(), enabled: true });
+            m.setBody(h("div", {}, h("div", { class: "note green" }, "Saved. Give these details to the driver:"),
+              dl([["App", h("span", { class: "mono" }, new URL("../driver/", location.href).href)], ["Username", h("strong", { class: "mono" }, r.username)], ["PIN", h("strong", { class: "mono" }, v.pin)]])));
+            m.setFooter([btn("Done", { variant: "primary", onClick: () => { m.close(); after(); } })]);
+          } catch (err) { toastError(err); }
+        });
+      } })]);
     }
 
     function addDocument(d, after) {

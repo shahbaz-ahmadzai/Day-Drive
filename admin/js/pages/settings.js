@@ -14,6 +14,7 @@ const SECTIONS = [
   { id: "company", label: "Company", icon: "building", render: company },
   { id: "areas", label: "Pickup area", icon: "pin", render: pickupAreas },
   { id: "booking", label: "Booking rules", icon: "sliders", render: booking },
+  { id: "holidays", label: "Holidays", icon: "calendar", render: holidays },
   { id: "notifications", label: "Notifications", icon: "sms", render: notifications },
   { id: "integrations", label: "Integrations", icon: "plug", render: integrations },
   { id: "team", label: "Team & logins", icon: "users", render: team, show: isOwner },
@@ -43,6 +44,59 @@ export default {
     open(active);
   },
 };
+
+/* ---------------- holidays (for monthly rides) ---------------- */
+async function holidays() {
+  const box = h("div", { class: "stack" });
+  const dmy = (d) => new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }).format(new Date(d + "T00:00:00Z"));
+  const next = (d) => { const x = new Date(d + "T00:00:00Z"); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10); };
+  async function draw() {
+    const today = new Date().toISOString().slice(0, 10);
+    const rows = check(await sb.from("holidays").select("day, kind, name").eq("region", "HE").gte("day", today).order("day").limit(2000));
+    // school holidays: group consecutive days with the same name
+    const ranges = [];
+    for (const r of rows.filter((x) => x.kind === "school")) {
+      const last = ranges[ranges.length - 1];
+      if (last && last.name === r.name && next(last.to) === r.day) last.to = r.day; else ranges.push({ name: r.name, from: r.day, to: r.day });
+    }
+    const pub = rows.filter((x) => x.kind === "public");
+    put(box,
+      h("div", { class: "note" }, "Monthly rides skip these days automatically (if the customer chose it). Public holidays for Hessen are already loaded until 2028. Please add the school holidays (Hessen) – you find the dates on kultusministerium.hessen.de."),
+      card("School holidays (Hessen)", [
+        table({ rows: ranges, emptyEl: empty("No school holidays entered yet", "Add the holidays so school rides are not planned on those days.", null, "calendar"), columns: [
+          { label: "Name", key: "name" }, { label: "From", render: (r) => dmy(r.from) }, { label: "Until", render: (r) => dmy(r.to) },
+          { label: "", cls: "right", render: (r) => (canEdit() ? btn("", { small: true, ic: "x", variant: "ghost", title: "Delete", onClick: async () => {
+            if (!(await confirmDialog({ title: `Delete ${r.name}?`, message: "Rides that were already cancelled for these days are not planned again automatically. Use “Resume” on the monthly ride if needed.", confirmText: "Delete", danger: true }))) return;
+            try { check(await sb.from("holidays").delete().eq("region", "HE").eq("kind", "school").eq("name", r.name).gte("day", r.from).lte("day", r.to)); toast("Deleted"); draw(); } catch (e) { toastError(e); }
+          } }) : null) }] }),
+        canEdit() ? h("div", { class: "row", style: { marginTop: "12px" } }, btn("Add school holidays", { variant: "primary", ic: "plus", small: true, onClick: add })) : null,
+      ], { sub: "Only future dates are shown." }),
+      card("Public holidays (Hessen)", h("p", { class: "small" }, pub.slice(0, 40).map((x) => `${dmy(x.day)} ${x.name}`).join(" · ") || "–")));
+  }
+  function add() {
+    const f = form([
+      { name: "name", label: "Name", required: true, placeholder: "e.g. Herbstferien 2026" },
+      { name: "from", label: "First day", type: "date", required: true },
+      { name: "to", label: "Last day", type: "date", required: true, validate: (v, api) => (v && api.get("from") && v < api.get("from") ? "Must be after the first day" : v && api.get("from") && (new Date(v) - new Date(api.get("from"))) / 86400000 > 60 ? "At most 60 days at once" : "") },
+    ], {}, { cols: 1 });
+    const m = openDrawer({ title: "Add school holidays", body: f.el });
+    m.setFooter([btn("Cancel", { onClick: m.close }), btn("Save", { variant: "primary", onClick: (e) => {
+      if (!f.validate()) return;
+      busy(e.currentTarget, async () => {
+        try {
+          const v = f.values(); const days = [];
+          for (let d = v.from; d <= v.to; d = next(d)) days.push({ day: d, region: "HE", kind: "school", name: v.name });
+          check(await sb.from("holidays").upsert(days, { onConflict: "day,region,kind" }));
+          const { data: n, error } = await sb.rpc("admin_apply_holidays", { p_from: v.from, p_to: v.to });
+          if (error) throw new Error(error.message);
+          toast(n ? `Saved – ${n} planned monthly rides in these days were cancelled` : "Saved"); m.close(); draw();
+        } catch (err) { toastError(err); }
+      });
+    } })]);
+  }
+  await draw();
+  return box;
+}
 
 /* ---------------- company ---------------- */
 async function company() {
@@ -438,7 +492,7 @@ async function activity() {
   const describe = (r) => {
     const n = r.new_data || {}, o = r.old_data || {};
     const name = n.display_name || o.display_name || n.booking_reference || o.booking_reference || n.name || n.username || r.record_id;
-    if (r.action === "UPDATE") {
+    if (String(r.action).toUpperCase() === "UPDATE") {
       const changed = Object.keys(n).filter((k) => !["updated_at"].includes(k) && JSON.stringify(n[k]) !== JSON.stringify(o[k]));
       return `${name}: ${changed.slice(0, 5).map(label).join(", ")}${changed.length > 5 ? "…" : ""}`;
     }
