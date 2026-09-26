@@ -149,16 +149,16 @@ export function toast(msg, type = "ok", ms = 3800) {
 export const toastError = (e) => toast(e?.message || String(e), "error", 6000);
 
 /* ---------- overlays: drawer (side panel) and modal ---------- */
-function overlay(kind, { title, subtitle, body, footer, wide, onClose }) {
+function overlay(kind, { title, subtitle, body, footer, wide, onClose, locked = false }) {
   const back = h("div", { class: `ov ov-${kind}` });
   const close = () => { back.classList.add("out"); document.removeEventListener("keydown", onKey); setTimeout(() => back.remove(), 200); onClose && onClose(); };
-  const onKey = (e) => { if (e.key === "Escape" && back === [...document.querySelectorAll(".ov")].pop()) close(); };
+  const onKey = (e) => { if (!locked && e.key === "Escape" && back === [...document.querySelectorAll(".ov")].pop()) close(); };
   const panel = h("div", { class: `${kind} ${wide ? "is-wide" : ""}`, role: "dialog", "aria-modal": "true" },
-    h("header", { class: `${kind}-head` }, h("div", {}, h("h2", {}, title || ""), subtitle ? h("p", { class: "muted small" }, subtitle) : null), iconBtn("x", "Close", close)),
+    h("header", { class: `${kind}-head` }, h("div", {}, h("h2", {}, title || ""), subtitle ? h("p", { class: "muted small" }, subtitle) : null), locked ? null : iconBtn("x", "Close", close)),
     h("div", { class: `${kind}-body` }, body),
     footer ? h("footer", { class: `${kind}-foot` }, footer) : null);
   back.append(panel);
-  back.addEventListener("mousedown", (e) => { if (e.target === back) close(); });
+  back.addEventListener("mousedown", (e) => { if (!locked && e.target === back) close(); });
   document.addEventListener("keydown", onKey);
   document.body.append(back);
   requestAnimationFrame(() => back.classList.add("in"));
