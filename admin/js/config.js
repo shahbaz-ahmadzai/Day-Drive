@@ -11,4 +11,7 @@ export const CONFIG = {
   LOCALE: "de-DE",
   TIMEZONE: "Europe/Berlin",
   WEBSITE_URL: "../index.html",
+  // same browser key as the booking page (Maps JavaScript API + Places API (New))
+  GOOGLE_MAPS_API_KEY: "AIzaSyCacZqlH-aeLD4XtNYu0o3shrMEDB2SolU",
+  MAP_CENTER: { lat: 50.1109, lng: 8.6821 },
 };
